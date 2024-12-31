@@ -36,24 +36,27 @@ a {
   color: white;
 }
 
-@media screen and (min-width: 1200px) {
+@media screen {
   body {
-      margin-left: 20rem;
-      margin-right: 20rem;
+    margin: 0 auto;
+    width: 50%;
   }
-  .intro-div, .section, .flickering-line {
-    width: 55%; /* Use 55% width on larger screens */
+
+  .profile-pic {
+    width: 30%;
   }
 }
 
-@media screen and (min-width: 600px) {
-    body {
-        margin-left: 5em;
-        margin-right: 5em;
-    }
-    .intro-div, .section, .flickering-line {
-      width: 95%; /* Use 55% width on larger screens */
-    }
+@media only screen and (hover: none) and (pointer: coarse) {
+
+  body {
+    margin: 0 auto;
+    width: 90%;
+  }
+
+  .profile-pic {
+    width: 60%;
+  }
 }
 
 @keyframes textflicker {
@@ -86,29 +89,22 @@ a {
 .intro-div{
   float: center;
   margin: 0 auto;
-  width: 55%;
 }
 
 .intro-para {
-  width: 100%;
   margin: 0 auto 1em;
   line-height: 1.6;
 }
 
 .profile-pic {
-  width: 25%;
-  float: left;
   height: auto;
-  margin: 0 auto 0em;
-  margin-right: 0.5em;
-  /* margin-bottom: 1em; */
+  margin: 0 auto 1em;
   object-fit: cover;
   display: block;
   animation: borderflicker 0.01s infinite alternate;
 }
 
 .section {
-  width: 55%;
   margin: 0 auto 1em;
   text-align: center;
 }
@@ -131,7 +127,6 @@ a {
 }
 
 .flickering-line {
-  width: 55%;
   height: 2px;
   background-color: white;
   animation: lineflicker 0.01s infinite alternate;
