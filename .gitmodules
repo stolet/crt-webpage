@@ -1,0 +1,3 @@
+[submodule "stolet.github.io"]
+	path = stolet.github.io
+	url = git@github.com:stolet/stolet.github.io.git
