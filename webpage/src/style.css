@@ -70,10 +70,10 @@ a {
 
 @keyframes borderflicker {
   from {
-    box-shadow: 0.4px 0 0 #ea36af, -0.8px 0 0 #75fa69;
+    box-shadow: 1px 0 0 #ea36af, -2px 0 0 #75fa69;
   }
   to {
-    box-shadow: 0.8px 0.2px 0.8px #ea36af, -0.4px -0.2px 0.8px #75fa69;
+    box-shadow: 2px 0.5px 2px #ea36af, -1px -0.5px 2px #75fa69;
   }
 }
 
@@ -135,4 +135,54 @@ a {
 .paper-icon {
   margin-left: 0.5em;
   text-decoration: none;
+}
+
+.crt-container {
+  float: center;
+  margin: 0 auto;
+  margin-bottom: 1em;
+  object-fit: cover;
+  width: 25%;
+  height: auto;
+  display: block;
+  border: 4px solid #222;
+  box-shadow: 0 0 20px rgba(0, 255, 0, 0.5), inset 0 0 20px rgba(0, 255, 0, 0.5);
+  position: relative;
+}
+
+.crt-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  animation: borderflicker 0.01s infinite alternate;
+  filter: contrast(1.2) brightness(0.9);
+}
+
+.scanlines {
+  position: absolute;
+  overflow: hidden;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.2) 0%,
+    rgba(0, 0, 0, 0.2) 2px,
+    rgba(0, 0, 0, 0) 2px,
+    rgba(0, 0, 0, 0) 4px
+  );
+  animation: image-flicker 0.1s infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes image-flicker {
+  from {
+    opacity: 0.7;
+  }
+  to {
+    opacity: 1;
+  }
 }
