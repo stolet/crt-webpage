@@ -12,7 +12,7 @@
 html { background: #121212;
        padding: 1em;
        font-family: Noto Sans Display;
-       color: #eee;
+       color: #a4f644;
        font-size: 1em;
        line-height: 1;
        text-shadow: 0.06rem 0 0.06rem #ea36af, -0.125rem 0 0.06rem #75fa69;
@@ -33,7 +33,7 @@ h2 {
 }
 
 a {
-  color: white;
+  color: #5ec986;
 }
 
 @media screen {
@@ -121,13 +121,13 @@ a {
 
 .subtext {
   font-size: 0.8em;
-  color: #aaa;
+  color: #5ec986;
   margin-top: 0.4em;
 }
 
 .flickering-line {
   height: .2em;
-  background-color: white;
+  background-color: #a4f644;
   animation: lineflicker 0.01s infinite alternate;
   margin: 1.5em auto 0;
 }
