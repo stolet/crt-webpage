@@ -41,12 +41,18 @@ a {
       margin-left: 20rem;
       margin-right: 20rem;
   }
+  .intro-div, .section, .flickering-line {
+    width: 55%; /* Use 55% width on larger screens */
+  }
 }
 
 @media screen and (min-width: 600px) {
     body {
         margin-left: 5em;
         margin-right: 5em;
+    }
+    .intro-div, .section, .flickering-line {
+      width: 95%; /* Use 55% width on larger screens */
     }
 }
 
