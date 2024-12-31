@@ -70,10 +70,10 @@ a {
 
 @keyframes borderflicker {
   from {
-    box-shadow: 0.2px 0 0 #ea36af, -0.4px 0 0 #75fa69;
+    box-shadow: 0.4px 0 0 #ea36af, -0.8px 0 0 #75fa69;
   }
   to {
-    box-shadow: 0.4px 0.1px 0.4px #ea36af, -0.2px -0.1px 0.4px #75fa69;
+    box-shadow: 0.8px 0.2px 0.8px #ea36af, -0.4px -0.2px 0.8px #75fa69;
   }
 }
 
@@ -123,12 +123,16 @@ a {
   font-size: 0.8em;
   color: #aaa;
   margin-top: 0.4em;
-  margin-left: 1em;
 }
 
 .flickering-line {
-  height: 2px;
+  height: .2em;
   background-color: white;
   animation: lineflicker 0.01s infinite alternate;
   margin: 1.5em auto 0;
+}
+
+.paper-icon {
+  margin-left: 0.5em;
+  text-decoration: none;
 }

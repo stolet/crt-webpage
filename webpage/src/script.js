@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const scrambledHTML = scrambleHTML(originalHTML);
       element.innerHTML = scrambledHTML;
 
-      unscrambleHTML(element, originalHTML, 3000);
+      unscrambleHTML(element, originalHTML, 10000);
   });
 
   function scrambleHTML(html) {
