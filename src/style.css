@@ -77,23 +77,32 @@ a {
   }
 }
 
+.intro-div{
+  float: center;
+  margin: 0 auto;
+  width: 55%;
+}
+
 .intro-para {
-  width: 75%;
+  width: 100%;
   margin: 0 auto 1em;
   line-height: 1.6;
 }
 
 .profile-pic {
-  width: 15%;
+  width: 25%;
+  float: left;
   height: auto;
-  margin: 0 auto 2em;
+  margin: 0 auto 0em;
+  margin-right: 0.5em;
+  /* margin-bottom: 1em; */
   object-fit: cover;
   display: block;
   animation: borderflicker 0.01s infinite alternate;
 }
 
 .section {
-  width: 75%;
+  width: 55%;
   margin: 0 auto 1em;
   text-align: center;
 }
@@ -101,6 +110,7 @@ a {
 .item-list {
   list-style-type: none;
   padding: 0;
+  line-height: 1.6;
 }
 
 .item-list li {
@@ -110,12 +120,12 @@ a {
 .subtext {
   font-size: 0.8em;
   color: #aaa;
-  margin-top: 0.7em;
+  margin-top: 0.4em;
   margin-left: 1em;
 }
 
 .flickering-line {
-  width: 75%;
+  width: 55%;
   height: 2px;
   background-color: white;
   animation: lineflicker 0.01s infinite alternate;
