@@ -17,7 +17,7 @@ html { background: #121212;
        line-height: 1;
        text-shadow: 0.06rem 0 0.06rem #ea36af, -0.125rem 0 0.06rem #75fa69;
        letter-spacing: 0.125em;
-       animation-duration: 0.01s;
+       animation-duration: 0.1s;
        animation-name: textflicker;
        animation-iteration-count: infinite;
        animation-direction: alternate;
@@ -61,10 +61,10 @@ a {
 
 @keyframes textflicker {
   from {
-    text-shadow: 1px 0 0 #ea36af, -2px 0 0 #75fa69;
+    text-shadow: 0.5px 0 0 #ea36af, -1px 0 0 #75fa69;
   }
   to {
-    text-shadow: 2px 0.5px 2px #ea36af, -1px -0.5px 2px #75fa69;
+    text-shadow: 1px 0.25px 1px #ea36af, -0.5px -0.25px 1px #75fa69;
   }
 }
 
@@ -101,7 +101,7 @@ a {
   margin: 0 auto 1em;
   object-fit: cover;
   display: block;
-  animation: borderflicker 0.01s infinite alternate;
+  animation: borderflicker 0.1s infinite alternate;
 }
 
 .section {
@@ -128,7 +128,7 @@ a {
 .flickering-line {
   height: .2em;
   background-color: #a4f644;
-  animation: lineflicker 0.01s infinite alternate;
+  animation: lineflicker 0.1s infinite alternate;
   margin: 1.5em auto 0;
 }
 
@@ -155,7 +155,7 @@ a {
   height: 100%;
   object-fit: cover;
   display: block;
-  animation: borderflicker 0.01s infinite alternate;
+  animation: borderflicker 0.1s infinite alternate;
   filter: contrast(1.2) brightness(0.9);
 }
 
