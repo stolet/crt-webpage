@@ -9,13 +9,13 @@
   font-weight: 400;
   src: url(./fonts/NotoSansDisplay-Regular.ttf);
 }
-html { background: #121212;
+html { background: #060f11;
        padding: 1em;
        font-family: Noto Sans Display;
-       color: #a4f644;
+       color: #00d991;
        font-size: 1em;
        line-height: 1;
-       text-shadow: 0.06rem 0 0.06rem #ea36af, -0.125rem 0 0.06rem #75fa69;
+       text-shadow: 0.06rem 0 0.06rem #ea36af, -0.125rem 0 0.06rem #69faa5;
        letter-spacing: 0.125em;
        animation-duration: 0.1s;
        animation-name: textflicker;
@@ -33,7 +33,7 @@ h2 {
 }
 
 a {
-  color: #5ec986;
+  color: #00d96d;
 }
 
 @media screen {
@@ -61,28 +61,28 @@ a {
 
 @keyframes textflicker {
   from {
-    text-shadow: 0.5px 0 0 #ea36af, -1px 0 0 #75fa69;
+    text-shadow: 0.5px 0 0 #ea36af, -1px 0 0 #69faa5;
   }
   to {
-    text-shadow: 1px 0.25px 1px #ea36af, -0.5px -0.25px 1px #75fa69;
+    text-shadow: 1px 0.25px 1px #ea36af, -0.5px -0.25px 1px #69faa5;
   }
 }
 
 @keyframes borderflicker {
   from {
-    box-shadow: 1px 0 0 #ea36af, -2px 0 0 #75fa69;
+    box-shadow: 1px 0 0 #ea36af, -2px 0 0 #69faa5;
   }
   to {
-    box-shadow: 2px 0.5px 2px #ea36af, -1px -0.5px 2px #75fa69;
+    box-shadow: 2px 0.5px 2px #ea36af, -1px -0.5px 2px #69faa5;
   }
 }
 
 @keyframes lineflicker {
   from {
-    box-shadow: 1px 0 0 #ea36af, -2px 0 0 #75fa69;
+    box-shadow: 1px 0 0 #ea36af, -2px 0 0 #69faa5;
   }
   to {
-    box-shadow: 2px 0.5px 2px #ea36af, -1px -0.5px 2px #75fa69;
+    box-shadow: 2px 0.5px 2px #ea36af, -1px -0.5px 2px #69faa5;
   }
 }
 
@@ -121,13 +121,13 @@ a {
 
 .subtext {
   font-size: 0.8em;
-  color: #5ec986;
+  color: #00d96d;
   margin-top: 0.4em;
 }
 
 .flickering-line {
   height: .2em;
-  background-color: #a4f644;
+  background-color: #00d991;
   animation: lineflicker 0.1s infinite alternate;
   margin: 1.5em auto 0;
 }
