@@ -1,5 +1,10 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const elements = document.querySelectorAll("p, h2, h1, li, span.subtext, div.subtext");
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const elements = document.querySelectorAll(".hero-kicker, .hero h1, .hero-subtitle, .intro-div p, .section h2, .entry-title, .entry-date, .entry-meta");
+
+  if (reduceMotion) {
+      return;
+  }
 
   elements.forEach((element) => {
       const originalHTML = element.innerHTML;
@@ -7,7 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const scrambledHTML = scrambleHTML(originalHTML);
       element.innerHTML = scrambledHTML;
 
-      unscrambleHTML(element, originalHTML, 10000);
+      unscrambleHTML(element, originalHTML, 5600);
   });
 
   function scrambleHTML(html) {

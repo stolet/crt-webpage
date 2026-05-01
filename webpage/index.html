@@ -10,21 +10,30 @@
     </head>
     <body>
       <script src="src/script.js"></script>
-        <div class="crt-container">
-          <div class="scanlines"></div>
-          <img src="imgs/photo-orig-crop.jpg" alt="profile-img" class="crt-image">
-        </div>
-        </div>
-        <div class="intro-div">
+        <header class="hero">
+          <div class="hero-copy">
+            <p class="hero-kicker">MPI-SWS Operating Systems Group</p>
+            <h1>Matheus Stolet</h1>
+            <p class="hero-subtitle">
+              PhD student researching datacentre network stacks
+            </p>
+          </div>
+          <div class="crt-container">
+            <div class="scanlines"></div>
+            <img src="imgs/photo-orig-crop.jpg" alt="Portrait of Matheus Stolet" class="crt-image">
+          </div>
+        </header>
+
+        <div class="intro-div" id="about">
           <p class="intro-para">
             Howdy! My name is Matheus Stolet and I am a PhD student at the MPI-SWS
             <a href="https://os.mpi-sws.org/" target="_blank">Operating Systems Group</a>,
             where I am advised by
-            <a href="https://people.mpi-sws.org/~antoinek/index.html" target="_blank">Antoine Kaufmann</a>
-            and investigate TCP
-            kernel bypass and ways to speed up packet processing in virtualized
-            environments. My interests revolve around operating systems, distributed
-            systems and datacentre networking, but any systems related topics pique my interest.
+            <a href="https://people.mpi-sws.org/~antoinek/index.html" target="_blank">Antoine Kaufmann</a>.
+            I am broadly interested in systems research, especially operating systems,
+            distributed systems, and datacentre networking.
+            More specifically, my work focuses on designing datacentre network stacks that deliver 
+            better performance, efficiency, and isolation.
           </p>
           <p class="intro-para">
             Previously, I was an undergrad and MSc student at the University of British Columbia.
@@ -57,20 +66,26 @@
       <div class="section">
           <h2>Education</h2>
           <ul class="item-list">
-              <li>
-                PhD: Computer Science
-                <div class="subtext">October 2021-Present</div>
-                <div class="subtext">Max Planck Institute for Software Systems</div>
+              <li class="entry">
+                <div class="entry-main">
+                  <span class="entry-title">PhD: Computer Science</span>
+                  <span class="entry-date">October 2021-Present</span>
+                </div>
+                <div class="entry-meta">Max Planck Institute for Software Systems</div>
               </li>
-              <li>
-                MSc: Computer Science
-                <div class="subtext">September 2019-August 2021</div>
-                <div class="subtext">University of British Columbia</div>
+              <li class="entry">
+                <div class="entry-main">
+                  <span class="entry-title">MSc: Computer Science</span>
+                  <span class="entry-date">September 2019-August 2021</span>
+                </div>
+                <div class="entry-meta">University of British Columbia</div>
               </li>
-              <li>
-                BA: Major, Computer Science - Minor, Philosophy
-                <div class="subtext">September 2015-May 2019</div>
-                <div class="subtext">University of British Columbia</div>
+              <li class="entry">
+                <div class="entry-main">
+                  <span class="entry-title">BA: Major, Computer Science - Minor, Philosophy</span>
+                  <span class="entry-date">September 2015-May 2019</span>
+                </div>
+                <div class="entry-meta">University of British Columbia</div>
               </li>
           </ul>
       </div>
@@ -80,64 +95,93 @@
       <div class="section">
           <h2>Employment</h2>
           <ul class="item-list">
-              <li>
-                Research Intern
-                <div class="subtext">June 2024-September 2024</div>
-                <div class="subtext">Microsoft Research Redmond</div>
+              <li class="entry">
+                <div class="entry-main">
+                  <span class="entry-title">Research Intern</span>
+                  <span class="entry-date">June 2024-September 2024</span>
+                </div>
+                <div class="entry-meta">Microsoft Research Redmond</div>
               </li>
-              <li>
-                Research Assistant
-                <div class="subtext">May 2019-August 2019</div>
-                <div class="subtext">BC Cancer Research Centre</div>
+              <li class="entry">
+                <div class="entry-main">
+                  <span class="entry-title">Research Assistant</span>
+                  <span class="entry-date">May 2019-August 2019</span>
+                </div>
+                <div class="entry-meta">BC Cancer Research Centre</div>
               </li>
-              <li>
-                Software Engineer Intern
-                <div class="subtext">May 2018-August 2018</div>
-                <div class="subtext">Thrive Health</div>
+              <li class="entry">
+                <div class="entry-main">
+                  <span class="entry-title">Software Engineer Intern</span>
+                  <span class="entry-date">May 2018-August 2018</span>
+                </div>
+                <div class="entry-meta">Thrive Health</div>
               </li>
           </ul>
       </div>
 
       <div class="flickering-line"></div>
 
-      <div class="section">
+      <div class="section" id="papers">
           <h2>Papers</h2>
           <ul class="item-list">
-              <li>
-                Virtuoso: High Resource Utilization and μs-scale Performance
-                Isolation in a Shared Virtual Machine TCP Network Stacks
-                <a href="papers/virtuoso.pdf" class="paper-icon" target="_blank">📄</a>
-                <div class="subtext">
-                  Matheus Stolet, Liam Arzola, Simon Peter, Antoine Kaufmann
+              <li class="entry paper-entry">
+                <div class="entry-main">
+                  <span class="entry-title">
+                    Chamelio: A Fast Shared Cloud Network Stack for Isolated Tenant-Defined Protocols
+                  </span>
+                  <span class="entry-date">Under Submission 2026</span>
                 </div>
-                <div class="subtext">Under Submission 2025</div>
+                <div class="entry-meta">
+                  <strong class="author-self">Matheus Stolet</strong>, Simon Peter, Antoine Kaufmann
+                </div>
+                <a href="papers/chamelio.pdf" class="paper-link" target="_blank">PDF</a>
               </li>
-              <li>
-                Generating Representative Macrobenchmark Microservice Systems from Distributed Traces with Palette
-                <a href="papers/palette.pdf" class="paper-icon" target="_blank">📄</a>
-                <div class="subtext">
-                  Vaastav Anand, Matheus Stolet,
+              <li class="entry paper-entry">
+                <div class="entry-main">
+                  <span class="entry-title">
+                    Tail Contagion: Sub-microsecond TIme Protection in Shared Software Network Datapaths
+                  </span>
+                  <span class="entry-date">Under Submission 2026</span>
+                </div>
+                <div class="entry-meta">
+                  <strong class="author-self">Matheus Stolet</strong>, Liam Arzola, Simon Peter, Antoine Kaufmann
+                </div>
+                <a href="papers/virtuoso.pdf" class="paper-link" target="_blank">PDF</a>
+              </li>
+              <li class="entry paper-entry">
+                <div class="entry-main">
+                  <span class="entry-title">
+                    Generating Representative Macrobenchmark Microservice Systems from Distributed Traces with Palette
+                  </span>
+                  <span class="entry-date">APSys 2025</span>
+                </div>
+                <div class="entry-meta">
+                  Vaastav Anand, <strong class="author-self">Matheus Stolet</strong>,
                   Jonathan Mace, Antoine Kaufmann
                 </div>
-                <div class="subtext">APSys 2025</div>
+                <a href="papers/palette.pdf" class="paper-link" target="_blank">PDF</a>
               </li>
-              <li>
-                The Odd One Out: Energy is not like Other Metrics
-                <a href="papers/odd-one-out.pdf" class="paper-icon" target="_blank">📄</a>
-                <div class="subtext">
-                  Vaastav Anand, Zhiqiang Xie, Matheus Stolet, Roberta de Viti,
+              <li class="entry paper-entry">
+                <div class="entry-main">
+                  <span class="entry-title">The Odd One Out: Energy is not like Other Metrics</span>
+                  <span class="entry-date">HotCarbon 2022</span>
+                </div>
+                <div class="entry-meta">
+                  Vaastav Anand, Zhiqiang Xie, <strong class="author-self">Matheus Stolet</strong>, Roberta de Viti,
                   Thomas Davidson, Reyhaneh Karimipour, Jonathan Mace
                 </div>
-                <div class="subtext">HotCarbon 2022</div>
+                <a href="papers/odd-one-out.pdf" class="paper-link" target="_blank">PDF</a>
               </li>
-              <li>
-                Aggregate-driven trace visualizations for performance debugging
-                <a href="papers/travista.pdf" class="paper-icon" target="_blank">📄</a>
-                <div class="subtext">
-                  Vaastav Anand, Matheus Stolet, Thomas Davidson, Ivan Beschastnikh,
+              <li class="entry paper-entry">
+                <div class="entry-main">
+                  <span class="entry-title">Aggregate-driven trace visualizations for performance debugging</span>
+                  <span class="entry-date">Arvix 2020</span>
+                </div>
+                <div class="entry-meta">
+                  Vaastav Anand, <strong class="author-self">Matheus Stolet</strong>, Thomas Davidson, Ivan Beschastnikh,
                   Tamara Munzner, Jonathan Mace
                 </div>
-                <div class="subtext">Arvix 2020</div>
+                <a href="papers/travista.pdf" class="paper-link" target="_blank">PDF</a>
               </li>
           </ul>
       </div>
