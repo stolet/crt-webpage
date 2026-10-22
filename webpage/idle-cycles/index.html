@@ -25,15 +25,15 @@
  <div class="help-heading"><h2 id="help-title">How to play</h2><button id="help-close" class="icon-button" aria-label="Close help">×</button></div>
  <section class="help-section" aria-labelledby="help-goal">
  <h3 id="help-goal">Goal</h3>
- <p><strong>Maximize app and network performance while keeping latency SLO violations low.</strong> Paint app cores to do work and network cores to handle packets. Pick a waiting strategy, then tap cores. Blue envelopes signal a network burst. Lightning marks show power returning to the shared rail or flowing to workers.</p>
+ <p><strong>Maximize app and network performance while keeping latency SLO violations low.</strong> Paint app cores to do work and network cores to handle packets. Pick a waiting strategy, then tap cores. Blue envelopes signal a network burst.</p>
  </section>
  <section class="help-section" aria-labelledby="help-strategies">
  <h3 id="help-strategies">Waiting Strategies</h3>
  <dl class="strategy-guide">
   <div><dt>Busy</dt><dd>Instant response, but uses power even while waiting. Less headroom for app throughput and more heat; usually good network throughput and few SLO violations.</dd></div>
-  <div><dt>Pause</dt><dd>No idle power and a quick 0.8-second wake. More headroom for apps and less heat, usually with good network throughput and few violations.</dd></div>
-  <div><dt>Block &amp; lend</dt><dd>Becomes an app worker: more app throughput, but uses power and heats up again. Its 3-second network wake can lower network throughput and raise violations.</dd></div>
-  <div><dt>Block &amp; sleep</dt><dd>No idle power; cools while idle. Frees headroom for existing apps without adding app workers. Its 3-second wake can lower network throughput and raise violations.</dd></div>
+  <div><dt>Pause</dt><dd>No idle power and a quick wake. More headroom for apps and less heat, usually with good network throughput and few violations.</dd></div>
+  <div><dt>Block &amp; lend</dt><dd>Becomes an app worker: more app throughput, but uses power and heats up again. Its long network wake can lower network throughput and raise violations.</dd></div>
+  <div><dt>Block &amp; sleep</dt><dd>No idle power; cools while idle. Frees headroom for existing apps without adding app workers. Its long wake can lower network throughput and raise violations.</dd></div>
  </dl>
  </section>
  <section class="help-section" aria-labelledby="help-metrics">
@@ -41,7 +41,7 @@
  <dl class="strategy-guide">
   <div><dt>App throughput</dt><dd>App work completed per second, including lent cores. Higher is better.</dd></div>
   <div><dt>Network throughput</dt><dd>Packets delivered per second, including late packets. Higher is better.</dd></div>
-  <div><dt>Latency SLO Violations</dt><dd>Percentage of resolved packets that missed the two-second deadline. Lower is better. Pending packets do not count until delivered on time or their deadline expires.</dd></div>
+  <div><dt>Latency SLO Violations</dt><dd>Percentage of resolved packets that missed the deadline. Lower is better.</dd></div>
  </dl>
  </section>
  <button id="help-done" class="help-done">Got it</button>
