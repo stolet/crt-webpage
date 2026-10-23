@@ -3,6 +3,7 @@
  'use strict';
  const {Machine,DT,CAP,BURSTS,POLICIES,defaults}=SchedulerModel,$=id=>document.getElementById(id);
  const {SPEED:POWER_SPEED,ARRIVAL_HOLD,route:powerRoute,pointAt:powerPoint,duration:powerDuration}=PowerMotion;
+ const counters=Object.fromEntries(['app-throughput','network-throughput','slo-violations','power-value','temperature-value'].map(id=>[id,new MetricMotion.Counter(id==='temperature-value'?20:null)]));
  const canvas=$('chip'),ctx=canvas.getContext('2d'),reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
  let cores=defaults(),strategy='pause',role='network',machine=new Machine(cores,1),playing=true,previous=0,accumulator=0,lastUI=0,lastDraw=0,positions=[],compact=false,currentTransfer=null,powerBatches=[],lastPowerEvent=0,lastNetworkClaim=0;
  const C={bg:'#1D1C30',grid:'#27243A',line:'#514A70',app:'#009E73',network:'#648FFF',pause:'#B6A7F6',sleep:'#A3B7EA',ice:'#BCD0FF',ink:'#141426',muted:'#B9B2CC',warm:'#FFB000',hot:'#DC267F'};
@@ -15,7 +16,6 @@
  function centered(t,x,y,c,size=9){ctx.fillStyle=c;ctx.font=`${size}px monospace`;ctx.fillText(t,Math.round(x-ctx.measureText(t).width/2),Math.round(y));}
  function sprite(data,x,y,scale,colors){data.forEach((row,j)=>[...row].forEach((v,i)=>{if(colors[v])rect(x+i*scale,y+j*scale,scale,scale,colors[v]);}));}
  function mix(a,b,f){const parse=s=>[1,3,5].map(i=>parseInt(s.slice(i,i+2),16)),aa=parse(a),bb=parse(b);return '#'+aa.map((v,i)=>Math.round(v+(bb[i]-v)*Math.max(0,Math.min(1,f))).toString(16).padStart(2,'0')).join('');}
- function isUsed(i){return cores[i]==='app'||['working','spinning','lending'].includes(machine.lanes[i].state);}
  function layout(){
   const oldWidth=canvas.width,oldHeight=canvas.height;
   compact=canvas.parentElement.clientWidth<600;canvas.width=compact?400:800;canvas.height=compact?550:392;
@@ -47,6 +47,7 @@
   // Configuration changes establish a fresh baseline; old roles, queues and
   // animation destinations must never leak into the new machine.
   powerBatches=[];currentTransfer=null;lastPowerEvent=0;lastNetworkClaim=0;
+  if(!preserveHeat)Object.keys(counters).forEach(id=>{counters[id]=new MetricMotion.Counter(id==='temperature-value'?20:null);});
   machine.step();
   accumulator=0;updateLabels();updateUI();draw();
  }
@@ -69,8 +70,8 @@
   const points=[[25,32],[29,34],[25,36],[21,34]],p=points[Math.min(3,Math.floor(progress*4))];rect(x+p[0],y+p[1],3,3,C.ink);
  }
  function core(i){
-  const {x,y}=positions[i],policy=cores[i],l=machine.lanes[i],temp=machine.temps[i>>2],lending=l.state==='lending',used=isUsed(i);
-  const throttled=machine.thermalLimited&&!machine.recovering&&machine.packageTemp>=80&&used&&temp>=65,sweaty=temp>=65&&!throttled;
+  const {x,y}=positions[i],policy=cores[i],l=machine.lanes[i],temp=machine.temps[i>>2],lending=l.state==='lending';
+  const throttled=machine.packageHot,sweaty=temp>=65&&!throttled;
   const waiting=['waiting','sleeping'].includes(l.state),cold=waiting&&temp<40;
   let color=policy==='free'?mix('#77718F','#88819D',reduced?.5:(1-Math.cos(machine.t*Math.PI/4))/2):policy==='app'||lending?C.app:l.state==='waiting'?C.pause:l.state==='sleeping'?C.sleep:C.network;
   if(l.state==='handoff')color=mix(C.network,C.app,Math.max(0,Math.min(1,machine.t-l.idleSince)));
@@ -127,7 +128,7 @@
   text(label,canvas.width-(compact?91:128),compact?19:23,machine.activeBurst?'#EDF0FF':C.muted,compact?8:10);
   for(let die=0;die<4;die++){
    const x=compact?12+(die%2)*194:24+(die%2)*388,y=compact?34+Math.floor(die/2)*240:42+Math.floor(die/2)*156,w=compact?182:364,h=compact?228:140,temp=machine.temps[die];
-   const limited=machine.thermalLimited&&!machine.recovering&&machine.packageTemp>=80&&machine.activeByDie[die]>0&&temp>=65;
+   const limited=machine.packageHot;
    const tint=limited?'#9E376A':temp>=65?'#AA7A36':temp>=45?'#7F704C':C.line;
    rect(x,y,w,h,tint);rect(x+2,y+2,w-4,h-4,limited?'#4C213C':mix('#242137','#403127',(temp-40)/45));
    text('DIE 0'+(die+1),x+10,y+17,C.muted,9);
@@ -272,19 +273,26 @@
   });
  }
  function updatePower(){
-  $('power').style.width=machine.power/CAP*100+'%';$('power-value').textContent=Math.round(machine.power/CAP*100)+'%';
+  counters['power-value'].set(machine.power/CAP*100);
   $('power').title=Math.round(machine.power/CAP*100)+'% of package power budget';
-  $('temperature').style.width=machine.packageTemp+'%';$('temperature-value').textContent=Math.round(machine.packageTemp)+' / 100';
+  counters['temperature-value'].set(machine.packageTemp);
   $('temperature').className=machine.packageTemp>=90?'limited':machine.packageTemp>=65?'warm':'';
   const borrowed=machine.lanes.filter(l=>l.state==='lending').length;
   $('phase-status').textContent=machine.thermalLimited?(machine.recovering?'Recovering · ':'Cooling · ')+Math.round(machine.clockFactor*100)+'% speed':borrowed?borrowed+' borrowed app'+(borrowed>1?'s':''):machine.activeBurst?'Network burst':'Idle phase';
  }
  function updateUI(){
   const rates=machine.rates(),elapsed=machine.t-machine.history[0].t;
-  $('app-throughput').textContent=elapsed<.1?'—':Math.round(rates.app);
-  $('network-throughput').textContent=elapsed<.1?'—':Math.round(rates.network);
-  $('slo-violations').textContent=machine.assessed?Math.round(machine.violations):'—';updatePower();updateLabels();
+  if(elapsed>=.1){counters['app-throughput'].set(rates.app);counters['network-throughput'].set(rates.network);}
+  counters['slo-violations'].set(machine.assessed?machine.violations:null);updatePower();updateLabels();
   $('play').classList.toggle('is-paused',!playing);$('play').setAttribute('aria-label',playing?'Pause simulation':'Resume simulation');$('play').title=playing?'Pause simulation':'Resume simulation';
+ }
+ function animateMetrics(elapsed){
+  Object.entries(counters).forEach(([id,counter])=>{
+   const value=counter.advance(elapsed),display=value===null?'—':String(value);
+   $(id).textContent=display+(id==='power-value'?'%':id==='temperature-value'?' / 100':'');
+  });
+  $('power').style.width=(counters['power-value'].value||0)+'%';
+  $('temperature').style.width=(counters['temperature-value'].value||0)+'%';
  }
  document.querySelectorAll('[data-role]').forEach(b=>b.addEventListener('click',()=>{role=b.dataset.role;updateSelection();announce(`Paint ${role==='network'?POLICIES[strategy]:POLICIES[role]}.`);}));
  document.querySelectorAll('[data-policy]').forEach(b=>b.addEventListener('click',()=>{strategy=b.dataset.policy;role='network';updateSelection();announce(`Paint ${POLICIES[strategy]} network cores.`);}));
@@ -300,6 +308,7 @@
   if(playing&&!document.hidden){accumulator+=elapsed;while(accumulator>=DT){machine.step();accumulator-=DT;}}
   if(now-lastDraw>=(reduced?200:1000/30)){draw();lastDraw=now;}
   if(now-lastUI>500){updateUI();lastUI=now;}
+  if(!document.hidden)animateMetrics(elapsed);
   requestAnimationFrame(frame);
  }
  new ResizeObserver(layout).observe(canvas.parentElement);

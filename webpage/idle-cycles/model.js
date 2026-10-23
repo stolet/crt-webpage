@@ -1,7 +1,11 @@
 /* Round-number teaching model, deliberately paced in exhibit seconds. */
 (function(root){
  'use strict';
- const DT=.02, CAP=8, WORK=20, DEADLINE=2, WINDOW=4;
+ const DT=.02, WORK=20, DEADLINE=2, WINDOW=4;
+ // Illustrative MHz: every working core runs at the same shared clock.
+ // Idle PAUSE is 15% above free/sleep. Budget: eight busy + eight idle cores.
+ const FREQUENCY={work:2000,idle:100,pause:115};
+ const CAP=(8*FREQUENCY.work+8*FREQUENCY.idle)/FREQUENCY.work;
  const BURSTS=[{name:'Short',period:13.6,duration:4},{name:'Medium',period:27.2,duration:8},{name:'Long',period:40.8,duration:12}];
  const POLICIES={free:'Unassigned',app:'App',busy:'Busy',pause:'Pause',lend:'Block & lend',sleep:'Block & sleep'};
  function defaults(){return Array(16).fill('free');}
@@ -22,6 +26,7 @@
   get violations(){return this.assessed?this.missed/this.assessed*100:0;}
   get percent(){return this.assessed?this.onTime/this.assessed*100:0;}
   get networkCount(){return this.cores.filter(c=>c!=='app'&&c!=='free').length;}
+  get packageHot(){return this.thermalLimited&&!this.recovering&&this.packageTemp>=80;}
   random(){this.seed=(Math.imul(1664525,this.seed)+1013904223)>>>0;return this.seed/4294967296;}
   step(){
    const t=this.t,end=t+DT,active=this.activeBurst,net=this.cores.map((c,i)=>c==='app'||c==='free'?-1:i).filter(i=>i>=0);
@@ -48,19 +53,19 @@
     if(this.lanes[best].queue.length<1024)this.lanes[best].queue.push(packet);
    }
    const previousDemand=this.demand,previousRequested=this.requestedPower,previousFactors=this.factors;
-   const used=Array(4).fill(0),apps=Array(4).fill(0),requested=Array(16).fill(0);
+   const used=Array(4).fill(0),apps=Array(4).fill(0),requested=Array(16).fill(FREQUENCY.idle/FREQUENCY.work);
    this.cores.forEach((policy,i)=>{
     const state=this.lanes[i].state,die=i>>2;
-    // Equal shares: app, useful networking, and busy polling each use one unit.
+    // App, useful networking, busy polling, and borrowed app work share a clock.
     if(policy==='app'||['working','spinning','lending'].includes(state)){requested[i]=1;used[die]++;}
+    else if(state==='waiting'||state==='waking'||state==='handoff')requested[i]=FREQUENCY.pause/FREQUENCY.work;
     if(policy==='app'||state==='lending')apps[die]++;
    });
-   this.activeByDie=used;this.appByDie=apps;this.demand=used.reduce((a,b)=>a+b,0);
-   this.power=Math.min(CAP,this.demand);this.pressure=this.demand/CAP;
+   this.activeByDie=used;this.appByDie=apps;this.demand=requested.reduce((a,b)=>a+b,0);
+   this.pressure=this.demand/CAP;
    const share=this.demand>CAP?CAP/this.demand:1;
-   this.corePower=requested.map(p=>p*share);
    // At least 13/16 active cores (80%) for long enough to reach thermal limit.
-   const fullSpeedTarget=this.demand>=13?100:20+this.demand*5;
+   const fullSpeedTarget=used.reduce((a,b)=>a+b,0)>=13?100:20+this.demand*5;
    const packageTarget=20+(fullSpeedTarget-20)*this.clockFactor;
    this.packageTemp=approach(this.packageTemp,packageTarget,2);
    if(this.packageTemp>=100-1e-8){this.clockFactor=.5;this.recovering=false;}
@@ -73,12 +78,15 @@
    if(!this.thermalLimited)this.recovering=false;
    for(let die=0;die<4;die++){
     // A saturated die alone tops out at 80: orange and sweaty, never throttled.
-    const target=Math.min(100,20+used[die]*15*this.clockFactor+Math.max(0,this.packageTemp-80));
+    const dieDemand=requested.slice(die*4,die*4+4).reduce((a,b)=>a+b,0);
+    const target=Math.min(100,20+dieDemand*15*this.clockFactor+Math.max(0,this.packageTemp-80));
     this.temps[die]=approach(this.temps[die],target,2);
    }
-   // Thermal throttling first halves the shared budget, then recovers. Power sharing is
-   // exactly 20 work/core up to eight cores, and 160 total work thereafter.
+   // Power and temperature reduce every worker's frequency by the same factor,
+   // including packet processing. Lower clocks also reduce actual power draw.
    this.factors=Array(4).fill(share*this.clockFactor);
+   this.corePower=requested.map(p=>p*this.factors[0]);
+   this.power=this.corePower.reduce((a,b)=>a+b,0);
    // A transition token prevents a delayed animation from reaching a core in a
    // later burst. Handoff -> borrowed app remains the same network-idle epoch;
    // starting a wake invalidates that epoch immediately.
@@ -88,10 +96,10 @@
     const released=[],claimed=[],beneficiaries=[];
     requested.forEach((p,i)=>{
      if(this.cores[i]!=='app'&&this.cores[i]!=='busy'){
-      if(previousStates[i]==='working'&&phase(this.lanes[i].state)==='idle'&&previousRequested[i]&&!p)released.push(i);
-      if(previousStates[i]==='waking'&&this.lanes[i].state==='working'&&!previousRequested[i]&&p)claimed.push(i);
+      if(previousStates[i]==='working'&&phase(this.lanes[i].state)==='idle'&&previousRequested[i]>p)released.push(i);
+      if(previousStates[i]==='waking'&&this.lanes[i].state==='working'&&previousRequested[i]<p)claimed.push(i);
      }
-     if(previousRequested[i]&&p&&(this.cores[i]==='app'||this.lanes[i].state==='lending')&&this.factors[i>>2]>previousFactors[i>>2]+1e-8)beneficiaries.push(i);
+     if(previousRequested[i]===1&&p===1&&(this.cores[i]==='app'||this.lanes[i].state==='lending')&&this.factors[i>>2]>previousFactors[i>>2]+1e-8)beneficiaries.push(i);
     });
     // Busy already owns a share. Borrowed app execution and thermal recovery
     // are not network power transfers either.
@@ -119,5 +127,5 @@
   }
   rates(){const a=this.history[0],elapsed=this.t-a.t;if(elapsed<DT)return {app:0,network:0};return {app:(this.work-a.work)/elapsed,network:(this.done-a.done)/elapsed};}
  }
- root.SchedulerModel={DT,CAP,WORK,DEADLINE,WINDOW,BURSTS,POLICIES,Machine,defaults};
+ root.SchedulerModel={DT,CAP,FREQUENCY,WORK,DEADLINE,WINDOW,BURSTS,POLICIES,Machine,defaults};
 })(typeof window!=='undefined'?window:globalThis);
