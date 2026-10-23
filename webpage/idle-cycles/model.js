@@ -3,8 +3,8 @@
  'use strict';
  const DT=.02, CAP=8, WORK=20, DEADLINE=2, WINDOW=4;
  const BURSTS=[{name:'Short',period:13.6,duration:4},{name:'Medium',period:27.2,duration:8},{name:'Long',period:40.8,duration:12}];
- const POLICIES={app:'App',busy:'Busy',pause:'Pause',lend:'Block & lend',sleep:'Block & sleep'};
- function defaults(){return Array.from({length:16},(_,i)=>i%4===3?'pause':'app');}
+ const POLICIES={free:'Unassigned',app:'App',busy:'Busy',pause:'Pause',lend:'Block & lend',sleep:'Block & sleep'};
+ function defaults(){return Array(16).fill('free');}
  function approach(value,target,speed){return value<target?Math.min(target,value+speed*DT):Math.max(target,value-speed*DT);}
  class Machine{
   constructor(cores=defaults(),burst=1){
@@ -13,7 +13,7 @@
    this.requestedPower=Array(16).fill(0);this.hasPowerSnapshot=false;this.powerEvents=[];this.powerEventSequence=0;this.powerEpochs=Array(16).fill(0);
    this.corePower=Array(16).fill(0);this.factors=Array(4).fill(1);this.activeByDie=Array(4).fill(0);this.appByDie=Array(4).fill(0);
    this.credit=0;this.deadlines=[];this.seed=4242;this.history=[{t:0,work:0,done:0}];
-   this.lanes=cores.map(policy=>({queue:[],credit:0,wakeUntil:0,wakeStarted:0,idleSince:0,state:policy==='app'?'app':policy==='busy'?'spinning':policy==='pause'?'waiting':policy==='lend'?'handoff':'sleeping'}));
+   this.lanes=cores.map(policy=>({queue:[],credit:0,wakeUntil:0,wakeStarted:0,idleSince:0,state:policy==='free'?'free':policy==='app'?'app':policy==='busy'?'spinning':policy==='pause'?'waiting':policy==='lend'?'handoff':'sleeping'}));
   }
   get period(){return BURSTS[this.burst].period;}
   // Keep 4/8/12-second bursts; quiet gaps are 60% of their original length.
@@ -21,10 +21,10 @@
   get activeBurst(){return (this.t+this.period-4)%this.period<BURSTS[this.burst].duration;}
   get violations(){return this.assessed?this.missed/this.assessed*100:0;}
   get percent(){return this.assessed?this.onTime/this.assessed*100:0;}
-  get networkCount(){return this.cores.filter(c=>c!=='app').length;}
+  get networkCount(){return this.cores.filter(c=>c!=='app'&&c!=='free').length;}
   random(){this.seed=(Math.imul(1664525,this.seed)+1013904223)>>>0;return this.seed/4294967296;}
   step(){
-   const t=this.t,end=t+DT,active=this.activeBurst,net=this.cores.map((c,i)=>c==='app'?-1:i).filter(i=>i>=0);
+   const t=this.t,end=t+DT,active=this.activeBurst,net=this.cores.map((c,i)=>c==='app'||c==='free'?-1:i).filter(i=>i>=0);
    const previousStates=this.lanes.map(l=>l.state);
    for(const i of net){
     const l=this.lanes[i],policy=this.cores[i];

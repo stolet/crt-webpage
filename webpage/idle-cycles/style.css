@@ -51,3 +51,8 @@ button{-webkit-tap-highlight-color:transparent}
  .chip-toolbar #reset{grid-column:3;grid-row:1}
  .chip-toolbar .paint-hint{grid-row:2}
 }
+
+.swatch.free{background:#817995}
+@media(max-width:520px){.paint-tools{gap:3px}.paint-tools>span{display:none}.paint-tools button{font-size:10px;padding:8px 6px}.chip-toolbar{gap:4px;padding:8px}.chip-toolbar>.icon-button{min-width:44px}.paint-hint:empty{display:none}}
+@media(max-width:520px){.paint-tools{flex:0 0 100%;display:flex}.paint-tools button{flex:1;min-height:44px}.chip-toolbar{flex-wrap:wrap}.chip-toolbar>.icon-button:first-of-type{margin-left:auto}}
+@media(max-width:520px){.chip-toolbar .paint-tools{grid-column:1 / -1;grid-row:1}.chip-toolbar #play{grid-column:2;grid-row:2}.chip-toolbar #reset{grid-column:3;grid-row:2}}

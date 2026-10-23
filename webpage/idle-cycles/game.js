@@ -34,10 +34,10 @@
  function updateLabels(){
   document.querySelectorAll('[data-core]').forEach(b=>{
    const i=Number(b.dataset.core),state=machine.lanes[i].state;
-   b.setAttribute('aria-label',`Core ${i+1}, die ${(i>>2)+1}: ${POLICIES[cores[i]]}, ${state}. Paint ${role==='app'?'App':POLICIES[strategy]}.`);
-   b.title=`${POLICIES[cores[i]]} · ${state==='lending'?'running borrowed app work':state}`;
+   b.setAttribute('aria-label',`Core ${i+1}, die ${(i>>2)+1}: ${POLICIES[cores[i]]}, ${state}. Paint ${role==='network'?POLICIES[strategy]:POLICIES[role]}.`);
+   b.title=cores[i]==='free'?'No app or network work assigned.':`${POLICIES[cores[i]]} · ${state==='lending'?'running borrowed app work':state}`;
   });
-  const n=cores.filter(c=>c!=='app').length;$('core-count').textContent=`${16-n} app · ${n} network`;
+  const n=machine.networkCount,a=cores.filter(c=>c==='app').length;$('core-count').textContent=`${a} app · ${n} network · ${16-a-n} free`;
  }
  function announce(t){$('announcement').textContent=t;}
  function restart(preserveHeat=true){
@@ -50,7 +50,7 @@
   machine.step();
   accumulator=0;updateLabels();updateUI();draw();
  }
- function paint(i){cores[i]=role==='app'?'app':strategy;restart();announce(`Core ${i+1}: ${POLICIES[cores[i]]}.`);}
+ function paint(i){cores[i]=role==='network'?strategy:role;restart();announce(`Core ${i+1}: ${POLICIES[cores[i]]}.`);}
  function updateSelection(){
   document.querySelectorAll('.range-labels span').forEach((el,i)=>el.classList.toggle('active',i===Number($('burst').value)));
   document.querySelectorAll('[data-role]').forEach(b=>{const selected=b.dataset.role===role;b.classList.toggle('selected',selected);b.setAttribute('aria-pressed',String(selected));});
@@ -72,20 +72,20 @@
   const {x,y}=positions[i],policy=cores[i],l=machine.lanes[i],temp=machine.temps[i>>2],lending=l.state==='lending',used=isUsed(i);
   const throttled=machine.thermalLimited&&!machine.recovering&&machine.packageTemp>=80&&used&&temp>=65,sweaty=temp>=65&&!throttled;
   const waiting=['waiting','sleeping'].includes(l.state),cold=waiting&&temp<40;
-  let color=policy==='app'||lending?C.app:l.state==='waiting'?C.pause:l.state==='sleeping'?C.sleep:C.network;
+  let color=policy==='free'?mix('#77718F','#88819D',reduced?.5:(1-Math.cos(machine.t*Math.PI/4))/2):policy==='app'||lending?C.app:l.state==='waiting'?C.pause:l.state==='sleeping'?C.sleep:C.network;
   if(l.state==='handoff')color=mix(C.network,C.app,Math.max(0,Math.min(1,machine.t-l.idleSince)));
   if(l.state==='waking'){
    const from=policy==='pause'?C.pause:policy==='lend'?C.app:C.sleep,progress=Math.max(0,Math.min(1,(machine.t-l.wakeStarted)/(l.wakeUntil-l.wakeStarted||1)));
    color=mix(from,C.network,progress);
   }
-  if(temp>45)color=mix(color,C.warm,(temp-45)/25);
-  if(temp>=65)color=mix(C.warm,'#FE6100',(temp-65)/15);
+  if(policy!=='free'&&temp>45)color=mix(color,C.warm,(temp-45)/25);
+  if(policy!=='free'&&temp>=65)color=mix(C.warm,'#FE6100',(temp-65)/15);
   if(throttled)color=C.hot;
   const pin=throttled?'#B84D89':temp>=65?'#C29243':'#7E7598';
   for(let k=0;k<3;k++){rect(x+10+k*12,y-4,5,4,pin);rect(x+10+k*12,y+46,5,4,pin);}
   rect(x+3,y,46,46,'#101020');rect(x,y+3,52,40,'#101020');rect(x+4,y+4,44,37,color);
   if(lending){rect(x+3,y+3,46,1,C.network);rect(x+3,y+40,46,1,C.network);}
-  const shut=l.state==='sleeping'||(l.state==='waking'&&machine.t-l.wakeStarted<(l.wakeUntil-l.wakeStarted)/2);
+  const shut=policy==='free'||l.state==='sleeping'||(l.state==='waking'&&machine.t-l.wakeStarted<(l.wakeUntil-l.wakeStarted)/2);
   rect(x+13,y+15,5,shut?2:5,C.ink);rect(x+34,y+15,5,shut?2:5,C.ink);
   if(throttled){rect(x+11,y+11,9,2,C.ink);rect(x+32,y+11,9,2,C.ink);}
 
@@ -99,12 +99,12 @@
   else if(l.state==='spinning')spinner(x,y);
 
   if(throttled)sprite(flame[reduced?0:Math.floor(machine.t/1.2)%2],x+14,y-23,3,{r:'#DC267F',y:'#FE6100',w:'#FFB000'});
-  else if(sweaty){
+  else if(policy!=='free'&&sweaty){
    const fall=reduced?0:Math.floor(machine.t/0.6)%4;
    sprite(drop,x+43,y+6+fall*2,1,{b:'#BCD0FF'});
   }else if(cold){sprite(snow,x-3,y-7,2,{b:C.ice});}
-  const label={app:'APP',working:'NET',spinning:'BUSY',waiting:'PAUSE',sleeping:'SLEEP',handoff:'LEND',lending:'APP*',waking:'WAKE'}[l.state];
-  centered(label,x+26,y+62,policy==='app'||lending?C.app:C.network,10);
+  const label={free:'FREE',app:'APP',working:'NET',spinning:'BUSY',waiting:'PAUSE',sleeping:'SLEEP',handoff:'LEND',lending:'APP*',waking:'WAKE'}[l.state];
+  centered(label,x+26,y+62,policy==='free'?C.muted:policy==='app'||lending?C.app:C.network,10);
  }
  function envelope(x,y,w=10){
   rect(x,y,w,7,C.network);rect(x+1,y+1,w-2,1,'#EEF2FF');
@@ -177,7 +177,7 @@
   const {i,epoch}=ref,state=machine.lanes[i].state;
   if(machine.powerEpochs[i]!==epoch)return false;
   if(direction==='grant')return cores[i]==='app'||state==='lending';
-  if(cores[i]==='app'||cores[i]==='busy')return false;
+  if(cores[i]==='free'||cores[i]==='app'||cores[i]==='busy')return false;
   return direction==='network'?state==='working':['waiting','sleeping','handoff','lending'].includes(state);
  }
  function validGrant(stage){
@@ -286,7 +286,7 @@
   $('slo-violations').textContent=machine.assessed?Math.round(machine.violations):'—';updatePower();updateLabels();
   $('play').classList.toggle('is-paused',!playing);$('play').setAttribute('aria-label',playing?'Pause simulation':'Resume simulation');$('play').title=playing?'Pause simulation':'Resume simulation';
  }
- document.querySelectorAll('[data-role]').forEach(b=>b.addEventListener('click',()=>{role=b.dataset.role;updateSelection();announce(`Paint ${role==='app'?'App':POLICIES[strategy]}.`);}));
+ document.querySelectorAll('[data-role]').forEach(b=>b.addEventListener('click',()=>{role=b.dataset.role;updateSelection();announce(`Paint ${role==='network'?POLICIES[strategy]:POLICIES[role]}.`);}));
  document.querySelectorAll('[data-policy]').forEach(b=>b.addEventListener('click',()=>{strategy=b.dataset.policy;role='network';updateSelection();announce(`Paint ${POLICIES[strategy]} network cores.`);}));
  $('burst').addEventListener('input',()=>{$('burst').setAttribute('aria-valuetext',BURSTS[Number($('burst').value)].name);updateSelection();restart();});
  $('play').addEventListener('click',()=>{playing=!playing;accumulator=0;updateUI();draw();});
