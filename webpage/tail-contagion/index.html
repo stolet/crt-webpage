@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Explore how CPU-time budgets protect neighbors sharing a datapath core.">
+  <meta name="color-scheme" content="light dark">
+  <title>Tail-Contagion</title>
+  <script src="../idle-cycles/theme.js"></script>
+  <link rel="stylesheet" href="style.css?v=5">
+  <script defer src="model.js?v=5"></script>
+  <script defer src="metric-motion.js?v=5"></script>
+  <script defer src="game.js?v=5"></script>
+</head>
+<body>
+<main class="sandbox">
+  <div class="page-actions">
+    <a href="../papers/virtuoso.pdf" target="_blank" rel="noopener">Read the paper ↗</a>
+    <button id="theme-toggle" class="icon-button" type="button" aria-label="Switch theme" aria-pressed="false"><span class="icon icon-theme" aria-hidden="true"></span></button>
+    <button id="help-open" class="button" type="button" aria-haspopup="dialog" aria-controls="help">How to play</button>
+  </div>
+  <header class="title"><h1>Tail<span>-Contagion</span></h1></header>
+
+  <section class="game-panel" aria-label="Datapath simulation">
+    <div class="game-toolbar">
+      <div class="playback"><span class="toolbar-label">µs / s</span><div class="compact-choices" role="group" aria-label="Playback speed"><button data-speed="0.2" class="selected" aria-pressed="true" type="button">0.2</button><button data-speed="0.5" aria-pressed="false" type="button">0.5</button><button data-speed="1" aria-pressed="false" type="button">1</button></div></div>
+      <div class="transport"><span id="clock" class="clock" aria-label="Simulated time since start">0.00 µs</span><button id="step" class="button" type="button" title="Pause and advance one processing step">Step</button><button id="pause" class="icon-button" type="button" aria-label="Pause simulation" aria-pressed="false"><span id="play-icon" class="icon icon-pause" aria-hidden="true"></span></button><button id="reset" class="icon-button" type="button" aria-label="Reset simulation"><span class="icon icon-reset" aria-hidden="true"></span></button></div>
+    </div>
+    <div class="scene-wrap"><canvas id="scene" width="960" height="380" role="img" aria-label="Victim and Adversary send packets through a datapath core. Adversary's packets can require additional processing."></canvas></div>
+    <div class="receipt-strip" aria-label="Most recent CPU-time bill"><span class="receipt-label">LAST BATCH <span id="receipt-number">—</span></span><p id="receipt">Waiting for a completed batch.</p></div>
+    <div class="metrics" aria-label="Simulation results">
+      <div><h2>Packets delivered</h2><p><strong id="delivered">0</strong><span>packets</span></p><small>Arrived at the output bin</small></div>
+      <div><h2>Victim missed deadlines</h2><p><strong id="misses">0</strong><span>packets</span></p><small id="miss-detail">4 µs deadline</small></div>
+      <div><h2>Datapath utilization</h2><p><strong id="utilization">—</strong><span>%</span></p><small>Busy time / reserved core time</small></div>
+    </div>
+  </section>
+
+  <section class="policy-section" aria-labelledby="policy-heading">
+    <h2 id="policy-heading" class="section-heading">Scheduling policy</h2>
+    <div class="policy-buttons" role="group" aria-label="Scheduling policy"><button data-mode="packets" class="selected" aria-pressed="true" type="button">Packet limit</button><button data-mode="bytes" aria-pressed="false" type="button">Byte limit</button><button data-mode="time" aria-pressed="false" type="button">Time budget</button><button data-mode="dedicated" aria-pressed="false" type="button">Dedicated</button></div>
+    <p id="policy-description" class="policy-description"></p>
+  </section>
+
+  <section class="workbench" aria-label="Simulation settings">
+    <div class="settings-card">
+      <h2 class="section-heading adversary-label">Adversary's workload</h2>
+      <div class="setting"><div class="setting-label" id="size-label">Packet size</div><div class="choices" role="group" aria-labelledby="size-label"><button data-size="64" class="selected" aria-pressed="true" type="button">64 B</button><button data-size="256" aria-pressed="false" type="button">256 B</button><button data-size="1024" aria-pressed="false" type="button">1,024 B</button></div></div>
+      <div class="setting"><label for="inspection">Extra processing <output id="inspection-value" for="inspection">3 checks</output></label><input id="inspection" type="range" min="0" max="4" value="3" step="1"><div class="range-labels"><span>Standard</span><span>Thorough</span></div></div>
+      <div class="setting"><div class="setting-label" id="traffic-label">Traffic</div><div class="choices" role="group" aria-labelledby="traffic-label"><button data-traffic="steady" class="selected" aria-pressed="true" type="button">Steady</button><button data-traffic="bursty" aria-pressed="false" type="button">Adversary bursts</button></div></div>
+    </div>
+    <div class="settings-card">
+      <h2 class="section-heading">Datapath settings</h2>
+      <div class="setting" id="allowance-setting"><label for="allowance">Allowance per sender <output id="allowance-value" for="allowance">Unrestricted</output></label><input id="allowance" type="range" min="0.35" max="1.4" step="0.05" value="0.7" disabled></div>
+      <div class="setting" id="cap-setting" hidden><label for="cap">Budget cap <output id="cap-value" for="cap"></output></label><input id="cap" type="range" min="0.5" max="4" step="0.25" value="1"></div>
+      <div class="setting" id="period-setting" hidden><label for="refill-period">Refill period <output id="period-value" for="refill-period"></output></label><input id="refill-period" type="range" min="0.05" max="1" step="0.05" value="0.1"></div>
+      <p class="setting-hint" id="budget-hint">Choose a rate limit or time budget to set an allowance.</p>
+    </div>
+  </section>
+
+  <p id="announcement" class="sr-only" role="status" aria-live="polite"></p>
+</main>
+<dialog id="help" aria-labelledby="help-title">
+  <div class="help-heading"><h2 id="help-title">Tail-Contagion</h2><button id="help-close" class="icon-button" type="button" aria-label="Close help"><span class="icon icon-close" aria-hidden="true"></span></button></div>
+  <p>Keep Victim's packets on time while both senders share a datapath core. Change Adversary's packet size and extra processing, then compare scheduling policies.</p>
+  <dl>
+    <div><dt>Packet limit</dt><dd>Every packet costs one token, regardless of size or extra processing.</dd></div>
+    <div><dt>Byte limit</dt><dd>A 1,024 B packet costs sixteen times as many tokens as a 64 B packet. Extra processing adds no bytes.</dd></div>
+    <div><dt>Time budget</dt><dd>A batch finishes before the core charges each sender for its actual CPU time. Extra scans and stamps consume that sender's budget. New credits repay debt before further budgeted service. Spare capacity remains available when no funded sender has waiting work.</dd></div>
+    <div><dt>Dedicated</dt><dd>Victim and Adversary each reserve a datapath core. An idle private core cannot help the other sender.</dd></div>
+  </dl>
+  <p>The batch slots show which packets are being processed. The outlined slot is the active packet. Read, copy, check, and stamp actions share the same processing area.</p>
+  <p><strong>Playback starts at 0.2 µs per real second.</strong> Pause or use Step to inspect one action at a time. Speed changes only playback; it does not change simulated CPU costs, traffic, or budgets. Space pauses; R resets. Changing settings restarts the simulation with repeatable arrivals.</p>
+  <p class="help-note">The counter, settings, packet timers, and CPU-time bills all use the same simulated microsecond clock. Packet handlers take fractions of a microsecond; batches contain up to four packets. Each packet travels the input belt for at least 0.65 µs. Its deadline is 4 µs from arrival, including time on the conveyors, in the queue, and in the core. A full timer turns amber; the packet briefly shakes and keeps an exclamation mark. Victim's missed count includes overdue packets still waiting. Delivered totals change only when a packet reaches the output bin. Utilization is cumulative busy time divided by reserved core time. These are teaching timings, not measurements from the paper.</p>
+  <button id="help-done" class="primary-button" type="button">Got it</button>
+</dialog>
+</body>
+</html>
