@@ -13,7 +13,7 @@
   const GLYPHS = {
     chip: ['..#..#..', '.######.', '##....##', '.#.##.#.', '.#.##.#.', '##....##', '.######.', '..#..#..']
   };
-  let config = defaults(), machine = new Sorter(config), playing = true, speed = .2;
+  let config = defaults(), machine = new Sorter(config), playing = true, speed = 1;
   let previous = null, accumulator = 0, lastUI = -1, lastDraw = 0, compact = false, helpWasPlaying = true, lastReceipt = -1;
   const groups = {
     mode: [...document.querySelectorAll('[data-mode]')],
