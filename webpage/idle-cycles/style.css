@@ -69,3 +69,86 @@ button{-webkit-tap-highlight-color:transparent}
 .paper-reference{display:inline-flex;align-items:center;gap:6px;margin-right:auto;min-height:44px;color:var(--accent);font:11px var(--mono);text-decoration:underline;text-underline-offset:3px}
 .paper-reference:hover{color:var(--ink)}
 .paper-reference:focus-visible{outline:3px solid #FE6100;outline-offset:4px}
+
+/* Turt's small RPG dialogue: readable labels outside the pixel illustration. */
+#tutorial{width:min(640px,calc(100% - 28px));padding:18px 22px;border:3px solid var(--ink);outline:3px solid var(--paper);box-shadow:8px 8px 0 #14142655;max-height:calc(100dvh - 32px);scrollbar-gutter:stable}
+#tutorial::backdrop{background:#18142BA6}
+.tutorial-heading,.tutorial-footer,.tutorial-footer>div,.help-footer{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.tutorial-heading>span{font:700 11px var(--mono);color:var(--accent);letter-spacing:1px}
+.tutorial-secondary{min-height:44px;padding:8px 10px;border:1px solid var(--control-border);background:transparent;font:12px var(--mono);color:var(--secondary)}
+.tutorial-secondary:disabled{opacity:.4;cursor:default}
+.tutorial-example{margin:14px 0 18px;background:#1D1C30;border:1px solid var(--panel-border);box-shadow:3px 3px 0 var(--shadow)}
+.tutorial-example-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 12px 4px;font:10px/1.4 var(--mono);color:#C8BFDA}
+#tutorial-state{text-align:right;color:#DED2FF}
+#tutorial-state[data-state="hot"]{color:#FF91B4}#tutorial-state[data-state="cool"]{color:#BCD0FF}
+.tutorial-example canvas{width:100%;aspect-ratio:5/2;image-rendering:pixelated}
+.tutorial-example-meter{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px 12px;min-height:34px;color:#D6CDE6;font:11px/1.5 var(--mono)}
+.tutorial-heat-track{flex:0 0 70px;height:6px;background:#494258}
+.tutorial-heat-track[hidden]{display:none}
+.tutorial-heat-track i{display:block;height:100%;background:#FFB000}
+#tutorial-heat[data-state="hot"]{background:#DC267F}#tutorial-heat[data-state="cool"]{background:#A3B7EA}
+.tutorial-example figcaption{background:var(--selection);border-top:1px solid var(--panel-border);padding:10px 12px;font:10px/1.5 var(--mono);color:var(--secondary);text-align:center;text-wrap:balance}
+.tutorial-dialogue{display:grid;grid-template-columns:80px minmax(0,1fr);column-gap:20px;grid-template-rows:min-content 1fr;align-items:start;min-height:160px;padding:0 0 18px}
+.turtle-guide{grid-row:1 / 3;text-align:center;padding-top:3px}
+.turtle-guide>span{display:inline-block;margin-top:8px;padding:4px 8px;background:var(--selection);font:700 10px/1 var(--mono);color:var(--accent);letter-spacing:1.5px}
+.turtle-sprite{position:relative;width:80px;height:64px;isolation:isolate;animation:turtle-walk .8s steps(1,end) infinite}
+.turtle-sprite canvas{position:absolute;inset:0;width:80px;height:64px;image-rendering:pixelated}
+#turtle-a{animation:turtle-frame-a .8s steps(1,end) infinite}
+#turtle-b{animation:turtle-frame-b .8s steps(1,end) infinite}
+#tutorial-title{margin:0;font:700 19px/1.35 var(--mono);letter-spacing:-.5px;text-wrap:balance}
+#tutorial-text{font-size:15px;line-height:1.6;margin:10px 0 0;grid-column:2}
+.tutorial-footer{border-top:1px solid var(--line);padding-top:14px}
+#tutorial-progress{font:12px var(--mono);color:var(--secondary);font-variant-numeric:tabular-nums;white-space:nowrap}
+#tutorial-next{min-height:44px;min-width:112px;margin:0;font-weight:bold}
+.help-footer{justify-content:flex-start;flex-wrap:wrap;margin-top:18px}
+.help-footer .help-done{margin:0}
+@keyframes turtle-frame-a{0%{visibility:visible}50%{visibility:hidden}}
+@keyframes turtle-frame-b{0%{visibility:hidden}50%{visibility:visible}}
+@keyframes turtle-walk{0%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+@media(max-width:520px){
+ #tutorial{padding:12px 14px;scrollbar-gutter:auto}
+ .tutorial-heading{gap:6px}.tutorial-heading>span{font-size:10px;letter-spacing:.5px}
+ .tutorial-example{margin:12px 0 16px}
+ .tutorial-example-heading{font-size:9px;padding:10px 10px 4px;gap:8px}
+ .tutorial-example-meter{font-size:10px;padding:6px 10px 10px;min-height:32px}
+ .tutorial-example figcaption{font-size:9px;padding:8px 10px}
+ .tutorial-heat-track{flex-basis:44px}
+ .tutorial-dialogue{grid-template-rows:auto auto;column-gap:14px;row-gap:8px;min-height:0;padding-bottom:16px;align-items:center}
+ .turtle-guide{grid-row:1;padding-top:0}.turtle-guide>span{margin-top:4px}
+ #tutorial-title{font-size:17px}#tutorial-text{grid-column:1 / -1;font-size:14px;line-height:1.5;margin:0}
+ .tutorial-footer,.tutorial-footer>div{gap:8px}
+ .tutorial-footer{padding-top:12px}.tutorial-secondary{font-size:11px}#tutorial-next{min-width:104px}
+}
+@media(max-height:520px) and (min-width:560px){
+ #tutorial{width:min(820px,calc(100% - 32px));padding:12px 18px}
+ #tutorial[open]{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:22px;align-items:center}
+ .tutorial-heading,.tutorial-footer{grid-column:1 / -1}
+ .tutorial-example{width:100%;max-width:310px;justify-self:center;margin:8px 0 10px}
+ .tutorial-example-heading{font-size:9px;padding:8px 10px 2px}
+ .tutorial-example-meter{font-size:10px;padding:4px 10px 8px;min-height:28px}
+ .tutorial-example figcaption{font-size:9px;padding:6px 10px}
+ .tutorial-dialogue{grid-template-columns:80px minmax(0,1fr);grid-template-rows:auto auto;column-gap:12px;row-gap:8px;align-items:center;min-height:0;padding:10px 0}
+ .turtle-guide{grid-row:1}.turtle-guide>span{margin-top:4px}
+ #tutorial-title{font-size:16px}#tutorial-text{grid-column:1 / -1;font-size:13px;line-height:1.5;margin:0}
+ .tutorial-footer{padding-top:10px}
+}
+@media(max-width:520px) and (max-height:700px){
+ .tutorial-example{margin:10px 0 12px}.tutorial-example figcaption{display:none}
+ .tutorial-dialogue{padding-bottom:12px}
+}
+@media(max-height:360px) and (min-width:560px){
+ #tutorial{padding:10px 14px}
+ #tutorial[open]{grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);column-gap:16px}
+ .tutorial-example figcaption{display:none}
+ .tutorial-example{margin:6px 0}
+ .tutorial-example-heading{font-size:8px;padding:6px 8px 2px}
+ .tutorial-example-meter{font-size:9px;padding:4px 8px 6px}
+ .tutorial-dialogue{grid-template-columns:40px minmax(0,1fr);padding:6px 0;row-gap:6px;column-gap:10px}
+ .turtle-sprite,.turtle-sprite canvas{width:40px;height:32px}
+ .turtle-guide>span{font-size:8px;padding:3px 5px;letter-spacing:1px}
+ #tutorial-title{font-size:15px}#tutorial-text{font-size:12px;line-height:1.45}
+ .tutorial-footer{padding-top:8px}
+}
+@media(prefers-reduced-motion:reduce){
+ .turtle-sprite,#turtle-a,#turtle-b{animation:none}#turtle-b{display:none}
+}

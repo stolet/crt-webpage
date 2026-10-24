@@ -300,9 +300,15 @@
  $('play').addEventListener('click',()=>{playing=!playing;accumulator=0;updateUI();draw();});
  $('reset').addEventListener('click',()=>{cores=defaults();strategy='pause';role='network';$('burst').value=1;$('burst').setAttribute('aria-valuetext','Medium');playing=true;updateSelection();restart(false);announce('Sandbox reset.');});
  let helpWasPlaying=false;
+ let tutorialWasPlaying=false;
+ const tutorial=IdleTutorial({
+  onOpen(){tutorialWasPlaying=playing;playing=false;previous=0;accumulator=0;updateUI();draw();},
+  onClose(){playing=tutorialWasPlaying;previous=0;accumulator=0;updateUI();draw();},
+ });
  $('help-button').addEventListener('click',()=>{helpWasPlaying=playing;playing=false;accumulator=0;updateUI();$('help').showModal();});
+ $('tutorial-replay').addEventListener('click',()=>$('help').close('tutorial'));
  ['help-close','help-done'].forEach(id=>$(id).addEventListener('click',()=>$('help').close()));
- $('help').addEventListener('close',()=>{playing=helpWasPlaying;previous=0;accumulator=0;updateUI();});
+ $('help').addEventListener('close',()=>{playing=helpWasPlaying;previous=0;accumulator=0;updateUI();if($('help').returnValue==='tutorial'){$('help').returnValue='';tutorial.open();}});
  function frame(now){
   const elapsed=previous?Math.min((now-previous)/1000,.1):0;previous=now;
   if(playing&&!document.hidden){accumulator+=elapsed;while(accumulator>=DT){machine.step();accumulator-=DT;}}
@@ -313,5 +319,5 @@
  }
  new ResizeObserver(layout).observe(canvas.parentElement);
  document.addEventListener('visibilitychange',()=>{previous=0;accumulator=0;});
- $('burst').setAttribute('aria-valuetext','Medium');updateSelection();layout();requestAnimationFrame(frame);
+ $('burst').setAttribute('aria-valuetext','Medium');updateSelection();layout();tutorial.open();requestAnimationFrame(frame);
 })();

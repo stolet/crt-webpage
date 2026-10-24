@@ -5,7 +5,7 @@
 <meta name="description" content="A pixel-art sandbox about cores, waiting, and a shared power budget.">
 <title>Idle Cycles Are Not Wasted Cycles</title>
 <meta name="color-scheme" content="light dark"><script src="theme.js"></script>
-<link rel="stylesheet" href="style.css"><script defer src="model.js"></script><script defer src="power-motion.js"></script><script defer src="metric-motion.js"></script><script defer src="game.js"></script>
+<link rel="stylesheet" href="style.css"><script defer src="model.js"></script><script defer src="power-motion.js"></script><script defer src="metric-motion.js"></script><script defer src="tutorial.js"></script><script defer src="game.js"></script>
 </head>
 <body>
 <main class="sandbox">
@@ -49,7 +49,21 @@
   <div><dt>Latency SLO Violations</dt><dd>Percentage of resolved packets that missed the deadline. Lower is better.</dd></div>
  </dl>
  </section>
- <button id="help-done" class="help-done">Got it</button>
+ <div class="help-footer"><button id="help-done" class="help-done">Got it</button><button id="tutorial-replay" class="tutorial-secondary">Replay Turt’s tutorial</button></div>
+</dialog>
+<dialog id="tutorial" aria-labelledby="tutorial-title" aria-describedby="tutorial-text">
+ <div class="tutorial-heading"><span>TURT'S CPU TOUR</span><button id="tutorial-skip" class="tutorial-secondary" type="button">Skip tutorial</button></div>
+ <figure class="tutorial-example" aria-hidden="true">
+  <div class="tutorial-example-heading"><span>EXAMPLE PACKAGE</span><span id="tutorial-state">SHARED POWER</span></div>
+  <canvas id="tutorial-chip" width="360" height="144"></canvas>
+  <div class="tutorial-example-meter"><span id="tutorial-visual-note">APP + NETWORK</span><span class="tutorial-heat-track" hidden><i id="tutorial-heat"></i></span></div>
+  <figcaption id="tutorial-caption"></figcaption>
+ </figure>
+ <div class="tutorial-dialogue" aria-live="polite" aria-atomic="true">
+  <div class="turtle-guide" aria-hidden="true"><div class="turtle-sprite"><canvas id="turtle-a" width="40" height="32"></canvas><canvas id="turtle-b" width="40" height="32"></canvas></div><span>TURT</span></div>
+  <h2 id="tutorial-title"></h2><p id="tutorial-text"></p>
+ </div>
+ <div class="tutorial-footer"><span id="tutorial-progress" aria-label="Tutorial progress"></span><div><button id="tutorial-back" class="tutorial-secondary" type="button">Back</button><button id="tutorial-next" class="help-done" type="button" autofocus>Next <span aria-hidden="true">▸</span></button></div></div>
 </dialog>
 </body>
 </html>
