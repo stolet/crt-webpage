@@ -37,7 +37,6 @@
    b.setAttribute('aria-label',`Core ${i+1}, die ${(i>>2)+1}: ${POLICIES[cores[i]]}, ${state}. Paint ${role==='network'?POLICIES[strategy]:POLICIES[role]}.`);
    b.title=cores[i]==='free'?'No app or network work assigned.':`${POLICIES[cores[i]]} · ${state==='lending'?'running borrowed app work':state}`;
   });
-  const n=machine.networkCount,a=cores.filter(c=>c==='app').length;$('core-count').textContent=`${a} app · ${n} network · ${16-a-n} free`;
  }
  function announce(t){$('announcement').textContent=t;}
  function restart(preserveHeat=true){
@@ -277,8 +276,6 @@
   $('power').title=Math.round(machine.power/CAP*100)+'% of package power budget';
   counters['temperature-value'].set(machine.packageTemp);
   $('temperature').className=machine.packageTemp>=90?'limited':machine.packageTemp>=65?'warm':'';
-  const borrowed=machine.lanes.filter(l=>l.state==='lending').length;
-  $('phase-status').textContent=machine.thermalLimited?(machine.recovering?'Recovering · ':'Cooling · ')+Math.round(machine.clockFactor*100)+'% speed':borrowed?borrowed+' borrowed app'+(borrowed>1?'s':''):machine.activeBurst?'Network burst':'Idle phase';
  }
  function updateUI(){
   const rates=machine.rates(),elapsed=machine.t-machine.history[0].t;
@@ -305,6 +302,7 @@
   onOpen(){tutorialWasPlaying=playing;playing=false;previous=0;accumulator=0;updateUI();draw();},
   onClose(){playing=tutorialWasPlaying;previous=0;accumulator=0;updateUI();draw();},
  });
+ $('tutorial-button').addEventListener('click',()=>tutorial.open());
  $('help-button').addEventListener('click',()=>{helpWasPlaying=playing;playing=false;accumulator=0;updateUI();$('help').showModal();});
  $('tutorial-replay').addEventListener('click',()=>$('help').close('tutorial'));
  ['help-close','help-done'].forEach(id=>$(id).addEventListener('click',()=>$('help').close()));

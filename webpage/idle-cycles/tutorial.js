@@ -4,16 +4,16 @@
  window.IdleTutorial=function({onOpen,onClose}){
   const $=id=>document.getElementById(id),dialog=$('tutorial');
   const steps=[
-   {title:'A little chip with lots of cores!',text:"Hi! I'm Turt. This multicore CPU packs four small chips, called chiplets, into one package. Each chiplet holds four cores. They share a power budget!",caption:'EXAMPLE PACKAGE · 4 CHIPLETS / 16 CORES',focus:'package'},
+   {title:'A little chip with lots of cores!',text:"Hi! I'm Turt. This multicore CPU packs four small chips, called chiplets, into one package. Each chiplet holds four cores. They share a power budget and can come in even bigger sizes!",caption:'EXAMPLE PACKAGE · 4 CHIPLETS / 16 CORES',focus:'package'},
    {title:'Application cores do the work.',text:'Green application cores run your app: a web server, for example, or a compute-heavy task. More app work per second means higher application throughput.',caption:'GREEN = APPLICATION WORK',focus:'app'},
    {title:'Network cores handle packets.',text:'Blue network cores are datapath cores: they process incoming packets. Traffic arrives in bursts. No packets? They go idle until more arrive. How should they wait?',caption:'BLUE = NETWORK / DATAPATH WORK',focus:'network'},
    {title:'One package. One power budget.',text:'All cores share a limited power supply. When demand hits the package limit, they share the available power and run slower. Letting network cores rest can free power for apps.',caption:'SHARED POWER · MORE DEMAND = LESS PER CORE',focus:'power'},
-   {title:'Too much work? Things heat up!',text:'In this game, keeping 13 or more cores active long enough heats the package to 100. Flames mean overheating! All cores slow down until the chip cools and gradually recovers.',caption:'SUSTAINED LOAD → HEAT → FLAMES → SLOWDOWN',focus:'heat'},
+   {title:'Too much work? Things heat up!',text:'In this sandbox, keeping 13 or more cores active long enough heats the package to 100. Flames mean overheating! All cores slow down until the chip cools and gradually recovers.',caption:'SUSTAINED LOAD → HEAT → FLAMES → SLOWDOWN',focus:'heat'},
    {title:'Busy: always on the lookout.',text:'Busy cores keep polling for packets. They respond immediately, but burn power while idle. That leaves less power for apps and adds heat.',caption:'BUSY · FAST RESPONSE / HIGH IDLE POWER',focus:'busy'},
    {title:'Pause: take a tiny breather.',text:'Pause uses very little idle power and wakes quickly. Released power can go to app cores. Less activity also lets the chip cool, with only a short delay when packets return.',caption:'PAUSE · LOW IDLE POWER / QUICK WAKE',focus:'pause'},
    {title:'Block & lend: help the app.',text:'An idle network core switches to application work. You gain an app worker, but it still uses power and makes heat. Switching back takes longer, so packets may miss their deadline.',caption:'LEND · MORE APP WORK / SLOW NETWORK WAKE',focus:'lend'},
    {title:'Block & sleep: get some rest.',text:'Sleeping cores use minimal idle power and cool down, leaving headroom for existing app cores. Waking takes longer, so returning packets may miss their deadline.',caption:'SLEEP · MINIMAL IDLE POWER / SLOW WAKE',focus:'sleep'},
-   {title:'Your turn to paint!',text:'Choose App or Network, then tap cores to assign them. For network cores, pick a waiting strategy first. Aim for high throughput and few latency deadline misses. Try different mixes!',caption:'YOUR SANDBOX STARTS WITH UNASSIGNED CORES',focus:'ready'},
+   {title:'Your turn to explore!',text:"There's no win condition. Explore the paper's tradeoffs: choose App or Network, pick a waiting strategy, then tap cores. Change one choice at a time and watch throughput, latency and heat.",caption:"EXPLORE THE PAPER'S TRADEOFFS",focus:'ready'},
   ];
   let index=0,returnFocus=null,animation=0,stepStarted=0;
   const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -136,7 +136,7 @@
    $('tutorial-title').textContent=step.title;$('tutorial-text').textContent=step.text;
    $('tutorial-caption').textContent=step.caption;$('tutorial-progress').textContent=`${index+1} / ${steps.length}`;
    $('tutorial-back').disabled=index===0;
-   $('tutorial-next').textContent=index===steps.length-1?"Let's play! ▸":'Next ▸';
+   $('tutorial-next').textContent=index===steps.length-1?'Explore ▸':'Next ▸';
    example(step.focus,reduced?2.8:0);
   }
   function open(){
