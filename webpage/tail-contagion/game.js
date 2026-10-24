@@ -6,13 +6,12 @@
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const C = { bg: '#1D1C30', grid: '#29263C', panel: '#27243A', line: '#514A70', metal: '#89829F',
     light: '#E9E3F7', muted: '#B4ABC9', purple: '#B6A7F6', ink: '#171525', belt: '#343047',
-    victim: '#009E73', adversary: '#DC267F', warning: '#FFB000', box: '#CBA476', tape: '#F0D0A1' };
+    victim: '#6DD5B0', adversary: '#F38FBD', warning: '#FFB000', box: '#CBA476', tape: '#F0D0A1' };
   // Every sprite uses the same two-pixel grid, outline, and palette. Packets
   // retain the same dimensions in the queue, batch, work area, and output.
   const PACKETS = { 64: { w: 20, h: 18 }, 256: { w: 28, h: 24 }, 1024: { w: 40, h: 30 } };
   const GLYPHS = {
-    chip: ['.######.', '.#....#.', '##.##.##', '##.##.##', '##.##.##', '##.##.##', '.#....#.', '.######.'],
-    clock: ['..####..', '.#....#.', '#..#...#', '#..#...#', '#..###.#', '#......#', '.#....#.', '..####..']
+    chip: ['..#..#..', '.######.', '##....##', '.#.##.#.', '.#.##.#.', '##....##', '.######.', '..#..#..']
   };
   let config = defaults(), machine = new Sorter(config), playing = true, speed = .2;
   let previous = null, accumulator = 0, lastUI = -1, lastDraw = 0, compact = false, helpWasPlaying = true, lastReceipt = -1;
@@ -27,15 +26,17 @@
     const m = machine.metrics();
     $('delivered').textContent = m.delivered;
     $('misses').textContent = m.missed;
-    $('miss-detail').textContent = 'of ' + m.arrived + ' Victim packets · ' + DEADLINE + ' µs deadline';
+    $('miss-detail').textContent = m.misses.toFixed(1) + '% of ' + m.arrived + ' Victim packets · ' + DEADLINE + ' µs deadline';
     $('clock').textContent = machine.t.toFixed(2) + ' µs';
     utilization.set(m.utilization);
   }
   function animateMetrics(elapsed) {
+    if (!playing || reduced) utilization.value = utilization.target;
     const value = utilization.advance(elapsed);
     $('utilization').textContent = value === null ? '0' : value.toFixed(0);
   }
   function timer(packet, x, y) {
+    if (packet.tenant !== 0) return;
     const age = Math.min(1, Math.max(0, (machine.t - packet.arrived) / DEADLINE));
     rect(x - 14, y, 28, 3, C.line);
     rect(x - 14, y, 28 * age, 3, packet.missedAt !== null ? C.warning : TENANTS[packet.tenant].color);
@@ -56,6 +57,12 @@
   function glyph(name, x, y, color) {
     GLYPHS[name].forEach((row, dy) => [...row].forEach((pixel, dx) => { if (pixel === '#') rect(x + dx * 2, y + dy * 2, 2, 2, color); }));
   }
+  function clockGlyph(x, y, color) {
+    ctx.strokeStyle = color; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(x + 8, y + 8, 7, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x + 8, y + 3); ctx.lineTo(x + 8, y + 8);
+    ctx.lineTo(x + 12, y + 8); ctx.stroke();
+  }
   function frame(x, y, w, h, header) {
     rect(x, y, w, h, C.metal); rect(x + 2, y + 2, w - 4, h - 4, C.ink);
     rect(x + 4, y + 4, w - 8, h - 8, C.panel);
@@ -65,30 +72,25 @@
   }
   function drawPacket(x, baseline, packet) {
     const { w, h } = PACKETS[packet.bytes];
-    const missed = packet.missedAt !== null;
+    const missed = packet.tenant === 0 && packet.missedAt !== null;
     const age = missed ? machine.t - packet.missedAt : Infinity;
     const shake = !reduced && age >= 0 && age < .3 ? Math.round(Math.sin(age * 60) * 2) : 0;
     const left = Math.round(x - w / 2) + shake, top = Math.round(baseline - h);
     rect(left - 2, top - 2, w + 4, h + 4, C.ink);
     rect(left, top, w, h, missed ? C.warning : C.box); rect(left, top, w, 2, C.tape);
     rect(left + w / 2 - 2, top, 4, h, C.tape); rect(left, baseline - 2, w, 2, '#A17C58');
-    rect(left + 4, top + 6, 6, 4, TENANTS[packet.tenant].color);
+    rect(missed ? left + w - 8 : left + 4, top + 6, missed ? 4 : 6, 4, TENANTS[packet.tenant].color);
     if (missed) {
       rect(left + 4, top + 5, 4, 6, C.ink); rect(left + 4, top + 13, 4, 2, C.ink);
-      if (!reduced && age >= 0 && age < .3) {
-        const spread = 3 + Math.floor(age * 12);
-        rect(left - spread, top - 3, 2, 2, C.warning);
-        rect(left + w + spread - 2, top - 3, 2, 2, C.warning);
-      }
     }
   }
   function avatar(x, y, color) {
     // Static sender: square body and the Idle Cycles face, without CPU pins.
     rect(x, y, 52, 46, C.ink);
     rect(x + 4, y + 4, 44, 38, color);
-    rect(x + 13, y + 15, 5, 5, C.ink);
-    rect(x + 34, y + 15, 5, 5, C.ink);
-    rect(x + 23, y + 23, 6, 2, C.ink);
+    rect(x + 14, y + 16, 4, 4, C.ink);
+    rect(x + 34, y + 16, 4, 4, C.ink);
+    rect(x + 22, y + 26, 8, 2, C.ink);
   }
   function belt(x, y, length, active, vertical = false) {
     rect(x, y, vertical ? 12 : length, vertical ? length : 12, C.ink);
@@ -97,10 +99,10 @@
     for (let p = 4 + offset; p < length - 4; p += 16) rect(x + (vertical ? 3 : p), y + (vertical ? p : 3), vertical ? 6 : 2, vertical ? 2 : 6, C.line);
   }
   function geometry() {
-    if (compact) return { width: 400, height: 680, core: { x: 28, y: 214, w: 344, h: 292 },
+    if (compact) return { width: 400, height: 704, core: { x: 28, y: 214, w: 320, h: 292 },
       senders: [{ x: 20, y: 22, w: 164 }, { x: 216, y: 22, w: 164 }],
-      queues: [{ x: 26, y: 138, w: 152 }, { x: 222, y: 138, w: 152 }],
-      output: { x: 140, y: 564, w: 120, h: 92 } };
+      queues: [{ x: 26, y: 146, w: 152 }, { x: 222, y: 146, w: 152 }],
+      output: { x: 140, y: 588, w: 120, h: 92 } };
     return { width: 960, height: 380, core: { x: 380, y: 48, w: 344, h: 292 },
       senders: [{ x: 24, y: 94, w: 148 }, { x: 24, y: 226, w: 148 }],
       queues: [{ x: 194, y: 138, w: 146 }, { x: 194, y: 270, w: 146 }],
@@ -108,7 +110,7 @@
   }
   function sender(id, g) {
     const tenant = machine.tenants[id], s = g.senders[id], q = g.queues[id];
-    const oldest = tenant.queue[0], late = oldest && machine.t > oldest.deadline;
+    const late = id === 0 && tenant.queue.some(packet => packet.missedAt !== null);
     rect(s.x, s.y, s.w, 72, C.line); rect(s.x + 2, s.y + 2, s.w - 4, 68, C.panel);
     avatar(s.x + 8, s.y + 12, tenant.color);
     text(tenant.name.toUpperCase(), s.x + 70, s.y + 27, C.light, 12);
@@ -121,12 +123,12 @@
       const target = q.x + q.w - 24 - i * 46;
       const fraction = Math.min(1, Math.max(0, (machine.t - packet.arrived) / INGRESS));
       const px = packet === incoming ? q.x + 22 + (target - q.x - 22) * fraction : target;
-      drawPacket(px, q.y - 2, packet); timer(packet, px, q.y - 44);
+      drawPacket(px, q.y - 2, packet); timer(packet, px, q.y - 38);
     });
     text(tenant.queue.length ? tenant.queue.length + ' WAITING' : 'QUEUE CLEAR', q.x, q.y + 32, late ? C.warning : C.muted, 10);
     const blocked = tenant.queue[0]?.readyAt <= machine.t && !machine.eligible(tenant);
     rect(q.x + q.w + 2, q.y - 34, 4, 46, blocked ? C.adversary : C.victim);
-    if (blocked) text(config.mode === 'time' ? 'DEBT' : 'LIMIT', q.x + q.w + 6, q.y + 32, C.adversary, 10, 'right');
+    if (blocked) text(config.mode === 'time' ? 'BUDGET' : config.mode === 'dedicated' ? 'WAIT' : 'LIMIT', q.x + q.w + 6, q.y + 32, C.adversary, 10, 'right');
   }
   function intakeRoute(g, tenant) {
     const q=g.queues[tenant],c=g.core;
@@ -137,14 +139,27 @@
       : [[q.x+q.w-24,q.y-2],[376,q.y-2],[376,destY],end];
     return [[q.x+q.w-24,q.y-2],[362,q.y-2],[362,destY],end];
   }
+  function outputRoute(g, tenant, bytes = 64) {
+    const c = g.core, o = g.output;
+    if (compact) {
+      if (config.mode === 'dedicated') {
+        const y = c.y + tenant * 154 + 89;
+        return [[c.x + c.w + 22, y], [376, y], [376, c.y + c.h + 28],
+          [o.x + o.w / 2, c.y + c.h + 28], [o.x + o.w / 2, o.y + PACKETS[bytes].h + 4]];
+      }
+      return [[o.x + o.w / 2, c.y + c.h + PACKETS[bytes].h + 4],
+        [o.x + o.w / 2, o.y + PACKETS[bytes].h + 4]];
+    }
+    const y = config.mode === 'dedicated' ? g.queues[tenant].y + 8 : c.y + 210;
+    return [[c.x + c.w + 24, y], [768, y], [768, c.y + 210], [o.x + PACKETS[bytes].w / 2 + 4, c.y + 210]];
+  }
   function drawRoutes(g) {
-    const c=g.core,o=g.output;
-    machine.tenants.forEach((_,id)=>wire(intakeRoute(g,id).map(([x,y])=>[x,y+2])));
-    if(compact){const exit=config.mode==='dedicated'?c.y+280:c.y+c.h;belt(194,exit,o.y-exit,true,true);}
-    else if(config.mode==='dedicated'){
-      g.queues.forEach(q=>wire([[c.x+c.w,q.y+16],[756,q.y+16],[756,c.y+216]],C.metal));
-      belt(756,c.y+210,o.x-756,true);
-    }else belt(c.x+c.w+2,c.y+210,o.x-c.x-c.w-2,true);
+    const c = g.core, o = g.output;
+    machine.tenants.forEach((_, id) => wire(intakeRoute(g, id).map(([x, y]) => [x, y + 2])));
+    if (config.mode === 'dedicated') {
+      machine.tenants.forEach((_, id) => wire(outputRoute(g, id).map(([x, y]) => [x, y + 2]), C.metal));
+    } else if (compact) belt(o.x + o.w / 2 - 6, c.y + c.h, o.y - c.y - c.h, true, true);
+    else belt(c.x + c.w + 2, c.y + 210, o.x - c.x - c.w - 2, true);
   }
   function along(points, progress) {
     const lengths = points.slice(1).map((p,i) => Math.abs(p[0]-points[i][0])+Math.abs(p[1]-points[i][1]));
@@ -176,7 +191,7 @@
   }
   function phase(worker) {
     const job = worker.job, stage = job && job.stages[job.stage];
-    return { job, stage, item: stage && stage.item >= 0 ? job.items[stage.item] : null,
+    return { job, stage, item: stage && stage.item >= 0 && stage.kind !== 'setup' ? job.items[stage.item] : null,
       progress: stage ? Math.min(1, job.elapsed / stage.duration) : 0 };
   }
   function scanner(x, y, progress, color) {
@@ -196,15 +211,19 @@
     frame(c.x, c.y, c.w, c.h, 'DATAPATH CORE');
     // Batch inventory, processing area, and status each own a fixed rectangle.
     text('BATCH', c.x + 18, c.y + 60, C.muted, 11);
+    const held = job ? job.items.filter(item => item.completed).length : 0;
+    if (held) text(held + ' HELD', center, c.y + 60, C.victim, 10, 'center');
     text(job ? job.items.length + (job.items.length === 1 ? ' PACKET' : ' PACKETS') : 'EMPTY', c.x + c.w - 18, c.y + 60, C.muted, 11, 'right');
-    const slots = config.batch, slotWidth = 54, start = center - slots * slotWidth / 2;
+    const slots = config.batch, slotWidth = 58, start = center - slots * slotWidth / 2;
     for (let i = 0; i < slots; i++) {
       const sx = start + i * slotWidth;
       const current = stage && stage.item === i;
-      rect(sx + 3, c.y + 72, slotWidth - 6, 40, current ? C.purple : C.line);
+      const heldPacket = job?.items[i]?.completed ? job.items[i].packet : null;
+      rect(sx + 3, c.y + 72, slotWidth - 6, 40, current ? C.purple : heldPacket ? (heldPacket.missedAt !== null ? C.warning : C.victim) : C.line);
       rect(sx + 5, c.y + 74, slotWidth - 10, 36, C.ink);
       if (job && job.items[i] && (stage.kind !== 'setup' || job.elapsed >= SETUP*(i+2)/(job.items.length+1))) {
-        drawPacket(sx + slotWidth / 2, c.y + 106, job.items[i].packet);
+        if (!current) drawPacket(sx + slotWidth / 2, c.y + 106, job.items[i].packet);
+        else text(String(i + 1), sx + slotWidth / 2, c.y + 99, C.purple, 12, 'center');
         timer(job.items[i].packet, sx + slotWidth / 2, c.y + 66);
       }
     }
@@ -217,7 +236,7 @@
     }
     text('LOOKUP', drawersX + 22, drawersY + 48, inspect ? C.warning : C.muted, 10, 'center');
     const clockX = c.x + c.w - 58;
-    glyph('clock', clockX, c.y + 144, C.purple);
+    clockGlyph(clockX, c.y + 144, C.purple);
     const elapsed = job ? job.stages.slice(0, job.stage).reduce((sum, s) => sum + s.duration, 0) + job.elapsed : 0;
     text(elapsed.toFixed(2) + ' µs', clockX + 8, c.y + 187, C.muted, 10, 'center');
     belt(c.x + 16, baseline + 2, c.w - 32, !!job);
@@ -229,7 +248,7 @@
         else stamp(center, c.y + 140, (progress - .55) / .45, C.warning, baseline - PACKETS[item.packet.bytes].h);
       }
       if (stage.kind === 'stamp') stamp(center, c.y + 140, progress, C.victim, baseline - PACKETS[item.packet.bytes].h);
-      text(TENANTS[item.packet.tenant].name.toUpperCase(), center, c.y + 244, TENANTS[item.packet.tenant].color, 11, 'center');
+      text(TENANTS[item.packet.tenant].name.toUpperCase(), center, c.y + 244, item.packet.tenant === 0 ? C.victim : C.adversary, 11, 'center');
     } else if (!job) text('READY', center, c.y + 190, C.muted, 11, 'center');
     rect(c.x + 16, c.y + 258, c.w - 32, 22, C.ink);
     text(stage ? stage.name.toUpperCase() : 'WAITING FOR PACKETS', center, c.y + 273, inspect ? C.warning : C.purple, 11, 'center');
@@ -243,9 +262,20 @@
       const { job, stage, item } = phase(worker);
       frame(x, y, w, 126, 'DATAPATH CORE ' + (id + 1));
       text('BATCH', x + 16, y + 57, C.muted, 10);
-      text(job ? job.items.length + (job.items.length === 1 ? ' PACKET' : ' PACKETS') : 'EMPTY', x + w - 16, y + 57, C.muted, 10, 'right');
+      text(job ? job.items.length + (job.items.length === 1 ? ' PACKET' : ' PACKETS') : 'EMPTY', x + w - 16, y + 52, C.muted, 10, 'right');
       belt(x + 16, y + 91, w - 32, !!job);
-      if (item) { drawPacket(x + w / 2, y + 89, item.packet); timer(item.packet, x + w / 2, y + 42); }
+      const held = job ? job.items.filter(item => item.completed).length : 0;
+      if (held) text(held + ' HELD', x + w - 16, y + 25, C.victim, 10, 'right');
+      if (job) job.items.forEach((entry, i) => {
+        const px = x + w / 2 + (i - (job.items.length - 1) / 2) * 56;
+        const current = stage.item === i;
+        const outline = current ? C.purple : entry.completed ? (entry.packet.missedAt !== null ? C.warning : C.victim) : C.line;
+        rect(px - 24, y + 57, 48, 38, outline);
+        rect(px - 22, y + 59, 44, 34, C.ink);
+        if (stage.kind !== 'setup' || job.elapsed >= SETUP * (i + 2) / (job.items.length + 1)) {
+          drawPacket(px, y + 89, entry.packet); timer(entry.packet, px, y + 53);
+        }
+      });
       text(stage ? stage.name.toUpperCase() : 'RESERVED, IDLE', x + w / 2, y + 115, stage ? C.purple : C.muted, 10, 'center');
     });
   }
@@ -255,11 +285,8 @@
     // rather than letting them float over the label or delivered count.
     machine.events.forEach(event => {
       const age = machine.t - event.visualAt;
-      if (age < 0 || age >= OUTPUT || event.delivered) return;
-      const p = age / OUTPUT;
-      let x, y;
-      if (compact) { x = 200; y = c.y + c.h + 34 + (o.y - c.y - c.h - 34) * p; }
-      else { const end = o.x - PACKETS[event.packet.bytes].w / 2 - 2; x = c.x + c.w + 24 + (end - c.x - c.w - 24) * p; y = c.y + 210; }
+      if (age >= OUTPUT || event.delivered) return;
+      const [x, y] = along(outputRoute(g, event.packet.tenant, event.packet.bytes), age / OUTPUT);
       drawPacket(x, y, event.packet); timer(event.packet, x, y - 44);
     });
     rect(o.x, o.y, o.w, o.h, C.metal); rect(o.x + 2, o.y + 2, o.w - 4, o.h - 4, C.ink);
@@ -270,7 +297,7 @@
     rect(o.x + 20, o.y + o.h - 21, o.w - 40, 2, C.line);
   }
   function draw() {
-    const g = geometry(); ctx.imageSmoothingEnabled = false;
+    const g = geometry();
     rect(0, 0, g.width, g.height, C.bg);
     for (let x = 0; x < g.width; x += 12) for (let y = 0; y < g.height; y += 12) rect(x, y, 1, 1, C.grid);
     drawRoutes(g);
@@ -280,7 +307,12 @@
   }
   function layout() {
     compact = canvas.parentElement.clientWidth <= 600;
-    const g = geometry(); canvas.width = g.width; canvas.height = g.height; draw();
+    const g = geometry(), width = canvas.parentElement.clientWidth;
+    const scale = width / g.width * (window.devicePixelRatio || 1);
+    canvas.width = Math.round(g.width * scale); canvas.height = Math.round(g.height * scale);
+    canvas.style.aspectRatio = `${g.width} / ${g.height}`;
+    ctx.setTransform(canvas.width / g.width, 0, 0, canvas.height / g.height, 0, 0);
+    draw();
   }
   function syncChoices() {
     Object.entries(groups).forEach(([name, buttons]) => buttons.forEach(button => {
@@ -288,30 +320,33 @@
       button.classList.toggle('selected', selected); button.setAttribute('aria-pressed', String(selected));
     }));
     $('inspection').value = String(config.extra); $('inspection-value').value = config.extra + (config.extra === 1 ? ' check' : ' checks');
+    $('adversary-load').value = String(Math.round(config.adversaryLoad * 100));
+    $('adversary-load-value').value = Math.round(config.adversaryLoad * 100) + '% · ' + machine.adversaryRate().toFixed(3) + ' packets / µs';
+    $('adversary-load').setAttribute('aria-valuetext', $('adversary-load-value').value);
     $('allowance').value = String(config.allowance);
     const rateLimited = ['packets', 'bytes'].includes(config.mode);
     const timeBudget = config.mode === 'time';
     $('allowance-setting').hidden = !rateLimited;
     $('cap-setting').hidden = !timeBudget;
     $('period-setting').hidden = !timeBudget;
-    $('budget-hint').hidden = config.mode === 'dedicated';
+    $('budget-hint').hidden = false;
     $('allowance').disabled = !rateLimited;
-    $('allowance-value').value = config.mode === 'packets' ? config.allowance.toFixed(2) + ' packets / µs'
-      : config.mode === 'bytes' ? Math.round(config.allowance * 256) + ' B / µs'
-      : config.mode === 'time' ? (config.allowance * .75).toFixed(2) + ' CPU µs / µs' : 'Unrestricted';
+    $('allowance-value').value = rateLimited
+      ? machine.allowanceRate().toFixed(config.mode === 'packets' ? 3 : 1) + (config.mode === 'packets' ? ' packets / µs' : ' B / µs')
+      : 'Unrestricted';
     $('policy-description').textContent = MODES[config.mode].description;
     $('cap').value = String(config.cap); $('refill-period').value = String(config.period);
     $('cap').disabled = !timeBudget; $('refill-period').disabled = !timeBudget;
-    $('cap-value').value = machine.cap().toFixed(config.mode === 'time' ? 2 : 0) + (config.mode === 'time' ? ' CPU µs' : config.mode === 'bytes' ? ' B' : ' packets');
-    $('period-value').value = config.period.toFixed(2) + ' µs';
-    $('budget-hint').textContent = config.mode === 'time' ? 'The cap limits saved CPU credit. Refills arrive periodically; longer periods or larger caps allow more interference.'
-      : config.mode === 'bytes' ? 'A 1,024 B packet costs 16 times as many byte tokens as a 64 B packet.'
-      : config.mode === 'packets' ? 'Every packet costs one token. Extra processing consumes no extra tokens.' : 'Choose a rate limit or time budget to set an allowance.';
-    canvas.setAttribute('aria-label', `${config.mode === 'dedicated' ? 'Two dedicated datapath cores' : 'One shared datapath core'} serving Victim and Adversary. Adversary sends ${config.size} byte packets with ${config.extra} extra checks. ${MODES[config.mode].name} policy.`);
+    $('cap-value').value = config.cap.toFixed(1) + ' µs';
+    $('period-value').value = config.period.toFixed(1) + ' µs';
+    $('budget-hint').textContent = config.mode === 'time' ? 'Caps of 1–5 µs and refills of 1–2 µs keep misses near the baseline. Larger caps increase throughput and interference; slower refills add waiting.'
+      : config.mode === 'bytes' ? 'A 1,024 B packet uses 16 times the allowance of a 64 B packet. More allowance increases utilization and victim misses.'
+      : config.mode === 'packets' ? 'Every packet uses one token. More allowance increases utilization and victim misses; extra processing uses no extra tokens.' : 'Two private cores reserve twice the capacity. The same packet workload uses about half the optimal Virtuoso utilization.';
+    canvas.setAttribute('aria-label', `${config.mode === 'dedicated' ? 'Two dedicated datapath cores' : 'One shared datapath core'} serving Victim and Adversary. Adversary sends at ${Math.round(config.adversaryLoad * 100)} percent traffic volume, using ${config.size} byte packets with ${config.extra} extra checks. ${MODES[config.mode].name} policy.`);
   }
   function updateUI() {
-    liveCounters();
-    $('play-icon').className = 'icon ' + (playing ? 'icon-pause' : 'icon-play');
+    liveCounters(); animateMetrics(0);
+    $('play-icon').classList.toggle('is-paused', !playing);
     $('pause').setAttribute('aria-label', playing ? 'Pause simulation' : 'Resume simulation');
     $('pause').setAttribute('aria-pressed', String(!playing));
     if (machine.receipt && machine.receipt.number !== lastReceipt) {
@@ -329,11 +364,7 @@
     lastUI = machine.t;
   }
   function restart() {
-    machine = new Sorter({ ...config,
-      allowance: config.mode === 'time' ? defaults().allowance : config.allowance,
-      cap: config.mode === 'time' ? config.cap : defaults().cap,
-      period: config.mode === 'time' ? config.period : defaults().period
-    }); accumulator = 0; previous = null; lastUI = -1; lastReceipt = -1;
+    machine = new Sorter(config); accumulator = 0; previous = null; lastUI = -1; lastReceipt = -1;
     $('receipt-number').textContent = '—'; $('receipt').textContent = 'Waiting for a completed batch.';
     utilization.value = utilization.target = null;
     syncChoices(); updateUI(); draw(); animateMetrics(0);
@@ -345,6 +376,7 @@
     config[name] = name === 'size' ? Number(button.dataset[name]) : button.dataset[name]; restart();
   })));
   $('inspection').addEventListener('input', event => { config.extra = Number(event.target.value); restart(); });
+  $('adversary-load').addEventListener('input', event => { config.adversaryLoad = Number(event.target.value) / 100; restart(); });
   $('allowance').addEventListener('input', event => { config.allowance = Number(event.target.value); restart(); });
   $('cap').addEventListener('input', event => { config.cap = Number(event.target.value); restart(); });
   $('refill-period').addEventListener('input', event => { config.period = Number(event.target.value); restart(); });
@@ -380,5 +412,6 @@
     requestAnimationFrame(tick);
   }
   new ResizeObserver(layout).observe(canvas.parentElement);
+  window.addEventListener('resize', layout);
   syncChoices(); layout(); updateUI(); animateMetrics(0); requestAnimationFrame(tick);
 })();
