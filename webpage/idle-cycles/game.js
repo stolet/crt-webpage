@@ -248,7 +248,6 @@
   document.querySelectorAll('[data-role],[data-policy],.strategy-help,#tutorial-button,#hint-button').forEach(b=>b.disabled=locked);
   document.querySelectorAll('[data-core]').forEach(b=>b.disabled=locked);
   $('benchmark-start').hidden=locked||phase==='result';$('benchmark-cancel').hidden=!locked;
-  $('illustration-note').hidden=sandbox||phase==='configure';
   $('benchmark-panel').hidden=sandbox;$('countdown').hidden=phase==='result';
   $('hint-button').hidden=locked;$('retry-button').hidden=phase!=='result';$('benchmark-start').disabled=locked;
   $('result-medal').hidden=phase!=='result';

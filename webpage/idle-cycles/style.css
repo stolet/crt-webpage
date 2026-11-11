@@ -153,8 +153,6 @@ body[data-mode] .chip-panel>.controls{max-width:none;margin:0;padding:12px 18px;
  body[data-mode="campaign"] .sandbox{padding-top:16px}body[data-mode] .chip-panel>.controls{padding:10px}
 }
 
-.illustration-note{position:absolute;bottom:8px;left:10px;z-index:1;color:#B9B2CC;font:10px var(--mono)}
-@media(max-width:520px){.illustration-note{font-size:9px}}
 .budget-track{display:flex;overflow:hidden}
 .budget-track i{height:100%;flex:none;transition:width .25s ease}
 .budget-track.is-inactive i{transition:none}
