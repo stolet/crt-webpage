@@ -1,21 +1,24 @@
-/* A short, manual tour. The example never changes the player's sandbox. */
+/* An in-place tour of the live sandbox, with no changes to player state. */
 (function(){
  'use strict';
- window.IdleTutorial=function({onOpen,onClose}){
+ window.IdleTutorial=function({onClose=()=>{}}={}){
   const $=id=>document.getElementById(id),dialog=$('tutorial');
-  const steps=[
-   {title:'A chip with lots of cores!',text:"I'm Behemoth. Your guide to this infernal machine. Four chiplets share one power budget, with four cores on each chiplet. Let's see what happens when some of them wait.",caption:'EXAMPLE PACKAGE · 4 CHIPLETS / 16 CORES',focus:'package'},
-   {title:'Application cores do the work.',text:'Green application cores run your app: a web server, for example, or a compute-heavy task. More app work per second means higher application throughput.',caption:'GREEN = APPLICATION WORK',focus:'app'},
-   {title:'Network cores handle packets.',text:'Blue network cores are datapath cores: they process incoming packets. Traffic arrives in bursts. No packets? They go idle until more arrive. How should they wait?',caption:'BLUE = NETWORK / DATAPATH WORK',focus:'network'},
-   {title:'One package. One power budget.',text:'All cores share a limited power supply. When demand hits the package limit, they share the available power and run slower. Letting network cores rest can free power for apps.',caption:'SHARED POWER · MORE DEMAND = LESS PER CORE',focus:'power'},
-   {title:'Too much work? Things heat up!',text:'In this sandbox, keeping 13 or more cores active long enough heats the package to 100. Flames mean overheating! All cores slow down until the chip cools and gradually recovers.',caption:'SUSTAINED LOAD → HEAT → FLAMES → SLOWDOWN',focus:'heat'},
-   {title:'Busy: always on the lookout.',text:'Busy cores keep polling for packets. They respond immediately, but burn power while idle. That leaves less power for apps and adds heat.',caption:'BUSY · FAST RESPONSE / HIGH IDLE POWER',focus:'busy'},
-   {title:'Pause: take a tiny breather.',text:'Pause uses very little idle power and wakes quickly. Released power can go to app cores. Less activity also lets the chip cool, with only a short delay when packets return.',caption:'PAUSE · LOW IDLE POWER / QUICK WAKE',focus:'pause'},
-   {title:'Block & lend: help the app.',text:'An idle network core switches to application work. You gain an app worker, but it still uses power and makes heat. Switching back takes longer, so packets may miss their deadline.',caption:'LEND · MORE APP WORK / SLOW NETWORK WAKE',focus:'lend'},
-   {title:'Block & sleep: get some rest.',text:'Sleeping cores use minimal idle power and cool down, leaving headroom for existing app cores. Waking takes longer, so returning packets may miss their deadline.',caption:'SLEEP · MINIMAL IDLE POWER / SLOW WAKE',focus:'sleep'},
-   {title:'Your turn to explore!',text:"There's no win condition. Explore the paper's tradeoffs: choose App or Network, pick a waiting strategy, then tap cores. Change one choice at a time and watch throughput, latency and heat.",caption:"EXPLORE THE PAPER'S TRADEOFFS",focus:'ready'},
+  const sandboxSteps=[
+   {title:'Processor cores',text:'The processor has 16 cores across four chiplets. Core assignments are kept when you enter the sandbox. You can change each core’s role and waiting strategy.',focus:'package',targets:['.chip-stage'],anchor:'.chip-stage'},
+   {title:'Application cores',text:'App cores run application work. Application throughput measures how much work they complete per second. It also includes application work completed by lent network cores.',focus:'app',targets:['[data-role="app"]'],anchor:'.chip-toolbar'},
+   {title:'Network cores',text:'Network cores process incoming packets. Packets arrive in bursts. A network core uses its waiting strategy when there are no packets to process.',focus:'network',targets:['[data-role="network"]'],anchor:'.chip-toolbar'},
+   {title:'Busy polling',text:'Busy continuously checks for packets. It starts processing packets without a wake-up delay, but still consumes power when no packets arrive.',focus:'busy',targets:['[data-policy="busy"]'],anchor:'.controls fieldset:first-child'},
+   {title:'Pause',text:'Pause reduces power use while waiting for packets. It resumes packet processing after a short delay. Lower network power use can increase application throughput when the processor reaches its power limit.',focus:'pause',targets:['[data-policy="pause"]'],anchor:'.controls fieldset:first-child'},
+   {title:'Block & lend',text:'A network core assigned to Block & lend runs application work when it has no packets to process. Switching back to network processing takes time. Packet processing is slower while the core reloads network data into its cache.',focus:'lend',targets:['[data-policy="lend"]'],anchor:'.controls fieldset:first-child'},
+   {title:'Block & sleep',text:'Block & sleep uses the least power while waiting. It reduces heat, but takes longer than Pause to resume packet processing. This wake-up delay can make packets miss their deadlines.',focus:'sleep',targets:['[data-policy="sleep"]'],anchor:'.controls fieldset:first-child'},
+   {title:'Network burst duration',text:'Burst duration controls how long each network burst lasts. Time receiving packets controls the percentage of time packets arrive. Change these controls to compare workloads.',focus:'burst',targets:['.burst-control','.traffic-control'],anchor:'.burst-control'},
+   {title:'Shared power limit',text:'All 16 cores share one power limit. When total demand exceeds the limit, the processor reduces their clock speed. Reducing power use on network cores can let application cores run faster.',focus:'power',targets:['.power-strip:not(.temperature-strip)'],anchor:'.power-strip:not(.temperature-strip)'},
+   {title:'Overheating',text:'Keeping 13 or more cores active can raise processor temperature to 100. At that limit, clock speed is halved. Clock speed recovers after the processor cools.',focus:'heat',targets:['.temperature-strip'],anchor:'.temperature-strip'},
+   {title:'Performance metrics',text:'Application throughput counts completed app work per second. Network throughput counts delivered packets per second. Deadline misses count packets that were not delivered on time. Higher throughput and fewer misses are better.',focus:'metrics',targets:['.metrics'],anchor:'.metrics'},
+   {title:'Sandbox controls',text:'Pause stops the simulation. Use Unassigned to remove a core’s assignment. The sandbox has no score. Select a level to run another scored benchmark.',focus:'ready',targets:['#play'],anchor:'.chip-toolbar'},
   ];
-  let index=0,returnFocus=null,animation=0,stepStarted=0;
+  let steps=sandboxSteps,single=false,scroll=true,intro=false,finalLabel="Done";
+  let index=0,returnFocus=null,animation=0,stepStarted=0,opened=false,highlighted=[];
   const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
   // Layer the reference sprite into a breathing body, expressive head and articulated bottle arm.
   const behemothArt=new Image(),behemothSprite=document.createElement('canvas');
@@ -26,7 +29,7 @@
    const pixels=behemothSprite.getContext('2d');pixels.imageSmoothingEnabled=false;
    pixels.drawImage(behemothArt,0,0,56,65);
    behemothReady=true;lastBehemothFrame='';
-   behemoth(dialog.open?(performance.now()-stepStarted)/1000:0);
+   behemoth(opened?(performance.now()-stepStarted)/1000:0);
   });
   // Precomputed 64 × 74, 16-colour sprite. Embed it so file:// previews also
   // work without canvas readback or a separate asset request.
@@ -120,110 +123,83 @@
     }
    }
   }
-  function example(focus,time=0){
-   const ctx=$('tutorial-chip').getContext('2d'),t=reduced?2.8:time;
-   const r=(x,y,w,h,c)=>{ctx.fillStyle=c;ctx.fillRect(Math.round(x),Math.round(y),w,h);};
-   const glyphs={D:['110','101','101','101','110'],I:['111','010','010','010','111'],E:['111','100','110','100','111'],P:['110','101','110','100','100'],O:['111','101','101','101','111'],W:['101','101','101','111','101'],R:['110','101','110','101','101'],'1':['010','110','010','010','111'],'2':['110','001','010','100','111'],'3':['110','001','010','001','110'],'4':['101','101','111','001','001']};
-   const label=(text,x,y,color='#C8BFDA')=>[...text].forEach((c,k)=>(glyphs[c]||[]).forEach((row,j)=>[...row].forEach((v,i)=>{if(v==='1')r(x+k*4+i,y-6+j,1,1,color);})));
-
-   const line=(points,color)=>{points.slice(1).forEach(([x,y],i)=>{const [a,b]=points[i],n=Math.max(Math.abs(x-a),Math.abs(y-b));for(let j=0;j<=n;j++)r(a+(x-a)*j/(n||1),b+(y-b)*j/(n||1),1,1,color);});};
-   const bolt=(x,y)=>['...11','..111','.111.','11111','..11.','.11..','.1...'].forEach((row,j)=>[...row].forEach((v,i)=>{if(v==='1')r(x+i,y+j,1,1,'#E5D9FF');}));
-   const railPacket=(x,returning,progress)=>{
-    const points=[[x,112],[x,129],[180,129],[180,139]];
-    if(!returning)points.reverse();
-    const lengths=points.slice(1).map((p,i)=>Math.abs(p[0]-points[i][0])+Math.abs(p[1]-points[i][1]));
-    let distance=progress*lengths.reduce((sum,v)=>sum+v,0);
-    for(let i=0;i<lengths.length;i++){
-     if(distance<=lengths[i]){const f=distance/(lengths[i]||1);bolt(points[i][0]+(points[i+1][0]-points[i][0])*f-3,points[i][1]+(points[i+1][1]-points[i][1])*f-4);return;}
-     distance-=lengths[i];
-    }
-   };
-   const cooling=focus==='pause'||focus==='sleep',transfer=cooling||focus==='power';
-   const hot=focus==='heat'&&t%6>2,heat=focus==='heat'?Math.min(1,(t%6)/2):0;
-   const lending=focus==='lend'&&(reduced||t%5>1.5);
-   const busy=focus==='busy',network=['network','busy','pause','lend','sleep'].includes(focus);
-   ctx.clearRect(0,0,360,144);r(0,0,360,144,'#1D1C30');
-   for(let x=0;x<360;x+=12)for(let y=0;y<144;y+=12)r(x,y,1,1,'#302940');
-   ctx.save();ctx.translate(0,-14);
-   const centers=[];
-   for(let die=0;die<4;die++){
-    const x=10+die*87,app=die<2,active=focus==='package'||focus==='ready'||focus==='power'||focus==='heat'||(focus==='app'?app:network&&!app);
-    r(x,30,79,82,hot?'#DC267F':active?'#B6A7F6':'#514A70');r(x+2,32,75,78,hot?'#4C213C':'#28243C');
-    label('DIE '+(die+1),x+9,43);
-    centers.push([x+39,118]);
-    for(let core=0;core<4;core++){
-     const cx=x+12+(core%2)*32,cy=51+Math.floor(core/2)*28;
-     let color=app?'#009E73':'#648FFF';
-     if(focus==='ready')color='#817995';
-     else if(!app){if(focus==='pause')color='#B6A7F6';if(lending)color='#009E73';if(focus==='sleep')color='#A3B7EA';}
-     if(heat)color=hot?'#DC267F':t%6>1?'#FFB000':color;
-     r(cx-2,cy-2,24,24,'#141426');r(cx,cy,20,20,color);
-     const asleep=!app&&focus==='sleep';
-     r(cx+4,cy+5,2,asleep?1:3,'#141426');r(cx+14,cy+5,2,asleep?1:3,'#141426');r(cx+8,cy+11,4,1,'#141426');
-     if(asleep){r(cx+14,cy+13,4,1,'#BCD0FF');r(cx+16,cy+14,1,1,'#BCD0FF');r(cx+15,cy+15,1,1,'#BCD0FF');r(cx+14,cy+16,4,1,'#BCD0FF');}
-     if(app&&focus!=='ready'||!app&&lending){r(cx+3,cy+16,14,2,'#134B45');r(cx+3,cy+16,Math.floor(((t*(hot?.3:1)+core*.2)%1)*14),2,'#BAE09B');}
-     if(!app&&busy){const spin=Math.floor(t*5)%4;[[4,16],[7,16],[10,16],[13,16]].forEach(([dx,dy],i)=>{if(i===spin)r(cx+dx,cy+dy,3,3,'#141426');});}
-     if(!app&&focus==='pause'){r(cx+7,cy+15,2,3,'#141426');r(cx+12,cy+15,2,3,'#141426');}
-    }
-    if(hot){
-     const frame=Math.floor(t*4)%2;
-     const flame=['...r....','..ryr...','.ryyyr..','.rywyr..','..rrr...'];
-     flame.forEach((row,j)=>[...row].forEach((v,i)=>{if(v!=='.')r(x+28+i*3,16+j*3-(frame&&j<2?2:0),3,3,{r:'#DC267F',y:'#FE6100',w:'#FFB000'}[v]);}));
-    }
-    if(cooling&&!app){
-     const y=38-(t%2)*8;
-     line([[x+65,y-4],[x+65,y+4]],'#BCD0FF');line([[x+61,y],[x+69,y]],'#BCD0FF');
-    }
-   }
-   // Network packets travel into the datapath; quiet strategies show no traffic.
-   if(focus==='network')for(let n=0;n<3;n++){
-    const x=194+((t*.25+n/3)%1)*135;
-    r(x,20,10,6,'#648FFF');line([[x,20],[x+5,24],[x+10,20]],'#E5EDFF');
-   }
-   // All four chiplets connect to the same supply. Released power travels from
-   // network chiplets to POWER, then out to the application chiplets.
-   centers.forEach(([x,y])=>line([[x,112],[x,129],[180,129],[180,141]],'#66518E'));
-   r(146,139,68,18,'#39304F');label('POWER',163,151,'#D4C7FF');bolt(151,143);
-   if(transfer){
-    const phase=(t%4)/4;
-    if(phase<.5){const p=phase*2;[2,3].forEach(i=>railPacket(centers[i][0],true,p));}
-    else{const p=(phase-.5)*2;[0,1].forEach(i=>railPacket(centers[i][0],false,p));}
-   }else if(focus==='package'||busy||focus==='heat'||focus==='app'||focus==='lend'){
-    centers.forEach(([x],i)=>railPacket(x,false,(t*.5+i*.25)%1));
-   }
-   ctx.restore();
-   $('tutorial-state').textContent=hot?'THROTTLED':cooling?'COOLING':lending?'LENDING TO APP':focus==='network'?'PACKETS ARRIVING':'SHARED POWER';
-   $('tutorial-state').dataset.state=hot?'hot':cooling?'cool':'normal';
-   const note=focus==='heat'?(hot?'100 / 100 · Half speed':'Temperature rising'):cooling?'Less heat · More app headroom':focus==='ready'?'Unassigned cores · Your mix next':lending?'Idle network cores run app work':busy?'Polling keeps using power':'Green: app · Blue: network';
-   $('tutorial-visual-note').textContent=note;
-   const meter=$('tutorial-heat').parentElement;
-   meter.hidden=focus!=='heat'&&!cooling;
-   $('tutorial-heat').style.width=Math.round(100*(cooling?.8-(t%4)/4*.6:heat))+'%';
-   $('tutorial-heat').dataset.state=hot?'hot':cooling?'cool':'warm';
-
+  function clearHighlights(){
+   highlighted.forEach(el=>el.classList.remove('tutorial-target'));
+   highlighted=[];
   }
   function animate(now){
-   if(!dialog.open)return;
-   const time=(now-stepStarted)/1000;
-   example(steps[index].focus,time);behemoth(time);
+   if(!opened)return;
+   behemoth((now-stepStarted)/1000);
    if(!reduced)animation=requestAnimationFrame(animate);
+  }
+  function positionIntro(){
+   if(!opened||!dialog.classList.contains('is-intro'))return;
+   const title=document.querySelector('.title h1'),heading=title.getBoundingClientRect();
+   const range=document.createRange();range.selectNode(title.firstChild);
+   const textBounds=range.getBoundingClientRect(),secondLine=title.querySelector('span').getBoundingClientRect();
+   const spriteWidth=$('behemoth').getBoundingClientRect().width;
+   const left=Math.max(10,Math.min(innerWidth-dialog.offsetWidth-10,Math.min(textBounds.left,secondLine.left)-spriteWidth-12));
+   dialog.classList.toggle('has-left-space',left>=210);
+   dialog.style.setProperty('--intro-left',`${left+scrollX}px`);
+   dialog.style.setProperty('--intro-top',`${heading.top+scrollY}px`);
+   dialog.style.setProperty('--intro-heading-height',`${heading.height}px`);
   }
   function render(){
    const step=steps[index];stepStarted=performance.now();
+   const initial=intro&&index===0;
+   dialog.classList.toggle('is-intro',initial);
+   if(initial){
+    const title=document.querySelector('.title h1'),bounds=title.getBoundingClientRect();
+    if(bounds.top<0||bounds.bottom>innerHeight)title.scrollIntoView({behavior:'instant',block:'start'});
+    positionIntro();
+   }
+   clearHighlights();
+   (step.targets||[]).forEach(selector=>{
+    const el=document.querySelector(selector);
+    if(el){el.classList.add('tutorial-target');highlighted.push(el);}
+   });
    $('tutorial-title').textContent=step.title;$('tutorial-text').textContent=step.text;
-   $('tutorial-caption').textContent=step.caption;$('tutorial-progress').textContent=`${index+1} / ${steps.length}`;
+   $('tutorial-progress').textContent=`${index+1} / ${steps.length}`;
+   $('tutorial-progress-bar').style.width=`${(index+1)/steps.length*100}%`;
    $('tutorial-back').disabled=index===0;
-   $('tutorial-next').textContent=index===steps.length-1?'Explore ▸':'Next ▸';
-   example(step.focus,reduced?2.8:0);behemoth();
+   $('tutorial-next').textContent=index===steps.length-1?finalLabel:'Next ▸';
+   $('tutorial-skip').textContent=single?'Dismiss':'Skip';
+   ['tutorial-back','tutorial-next','tutorial-progress'].forEach(id=>$(id).hidden=single);
+   $('tutorial-progress-bar').parentElement.hidden=single;
+   behemoth();
+   // Keep the highlighted control visible above the floating guide.
+   if(scroll&&!initial){
+    const target=highlighted[0]||document.querySelector(step.anchor);
+    if(target){
+     const bounds=target.getBoundingClientRect(),guideTop=dialog.getBoundingClientRect().top;
+     if(bounds.bottom<0||bounds.top>guideTop-24)target.scrollIntoView({behavior:'instant',block:'center'});
+    }
+   }
   }
-  function open(){
-   if(dialog.open)return;
-   returnFocus=document.activeElement;index=0;render();onOpen();dialog.showModal();animation=requestAnimationFrame(animate);
+  function open(options={}){
+   if(!opened)returnFocus=document.activeElement;
+   cancelAnimationFrame(animation);
+   steps=options.steps||sandboxSteps;single=Boolean(options.single);scroll=options.scroll!==false;intro=Boolean(options.intro);finalLabel=options.finalLabel||'Done';
+   index=0;opened=true;dialog.hidden=false;render();
+   if(options.focus!==false&&!single)$('tutorial-next').focus({preventScroll:true});
+   animation=requestAnimationFrame(animate);
   }
-  $('tutorial-next').addEventListener('click',()=>{if(index===steps.length-1)dialog.close();else{index++;render();}});
+  function say(message){open({steps:[message],single:true,focus:false,scroll:false});}
+  function close(reason="dismiss"){
+   if(!opened)return;
+   opened=false;dialog.hidden=true;clearHighlights();cancelAnimationFrame(animation);
+   if(returnFocus instanceof HTMLElement&&returnFocus!==document.body)returnFocus.focus({preventScroll:true});
+   else $('tutorial-button').focus({preventScroll:true});
+   onClose(reason);
+  }
+  $('tutorial-next').addEventListener('click',()=>{if(index===steps.length-1)close('finish');else{index++;render();}});
   $('tutorial-back').addEventListener('click',()=>{if(index>0){index--;render();}});
-  $('tutorial-skip').addEventListener('click',()=>dialog.close());
-  dialog.addEventListener('close',()=>{cancelAnimationFrame(animation);onClose();if(returnFocus instanceof HTMLElement&&returnFocus!==document.body)returnFocus.focus();else $('help-button').focus();});
-  return {open};
+  $('tutorial-skip').addEventListener('click',()=>close('skip'));
+  window.addEventListener('resize',positionIntro);
+  document.fonts?.ready.then(positionIntro);
+  document.addEventListener('keydown',event=>{
+   if(opened&&event.key==='Escape'&&!document.querySelector('dialog[open]')){event.preventDefault();close();}
+  });
+  return {open,close,say};
  };
 })();

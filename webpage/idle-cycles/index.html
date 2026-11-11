@@ -2,68 +2,60 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="A pixel-art sandbox about cores, waiting, and a shared power budget.">
+<meta name="description" content="Four processor-configuration challenges about packet processing, application throughput, power and heat, followed by an unscored sandbox.">
 <title>Idle Cycles Are Not Wasted Cycles</title>
 <meta name="color-scheme" content="light dark"><script src="theme.js"></script>
-<link rel="stylesheet" href="style.css"><script defer src="model.js"></script><script defer src="power-motion.js"></script><script defer src="metric-motion.js"></script><script defer src="tutorial.js"></script><script defer src="game.js"></script>
+<link rel="stylesheet" href="style.css"><script defer src="model.js"></script><script defer src="campaign-balance.js"></script><script defer src="campaign-model.js"></script><script defer src="metric-motion.js"></script><script defer src="tutorial.js"></script><script defer src="illustration.js"></script><script defer src="game.js"></script>
 </head>
 <body>
 <main class="sandbox">
- <header class="title"><div class="title-actions"><a class="paper-reference" href="../papers/behemoth.pdf" target="_blank" rel="noopener">Read the paper <span aria-hidden="true">↗</span></a><button id="theme-toggle" class="icon-button theme-toggle" type="button" aria-label="Switch to dark mode" aria-pressed="false" title="Switch to dark mode"><svg class="theme-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20.5 14A9 9 0 0 1 10 3.5 9 9 0 1 0 20.5 14Z"/></svg><svg class="theme-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg></button><div class="guide-actions"><button id="help-button" class="help-button" aria-haspopup="dialog" aria-controls="help">? How to play</button><button id="tutorial-button" class="help-button" type="button" aria-haspopup="dialog" aria-controls="tutorial">Tutorial</button></div></div><h1>Idle Cycles Are<br><span>Not Wasted Cycles</span></h1></header>
- <section class="chip-panel" aria-label="Editable processor">
-  <div class="chip-toolbar"><div class="paint-tools" role="group" aria-label="Core paint tool"><span>Paint</span><button data-role="free" aria-pressed="false"><i class="swatch free"></i>Unassigned</button><button data-role="app" aria-pressed="false"><i class="swatch app"></i>App</button><button data-role="network" class="selected" aria-pressed="true"><i class="swatch network"></i>Network</button></div><span class="paint-hint"></span><button id="play" class="icon-button" aria-label="Pause simulation" title="Pause simulation">Ⅱ</button><button id="reset" class="icon-button" aria-label="Reset sandbox" title="Reset sandbox">↺</button></div>
-  <div class="power-strip"><span title="Current package power relative to its limit.">Package power</span><div class="power-track"><i id="power"></i></div><strong id="power-value">0%</strong></div><div class="power-strip temperature-strip"><span title="Heat builds over time. The package throttles at 100 after sustained use of at least 13 cores.">Package temperature</span><div class="power-track"><i id="temperature"></i></div><strong id="temperature-value">20 / 100</strong></div><div class="chip-stage"><canvas id="chip" width="800" height="398" aria-hidden="true"></canvas><div id="core-buttons" class="core-buttons" role="group" aria-label="Tap a core to paint its role and waiting strategy"></div></div>
-  <div class="metrics" aria-label="Live simulation metrics"><div><h2 title="Completed application work per exhibit second, averaged over the last four seconds. Includes borrowed cores.">Application throughput</h2><p><strong id="app-throughput">—</strong><span>work / s</span></p></div><div><h2 title="Delivered packets per exhibit second, averaged over the last four seconds. Late deliveries also count.">Network throughput</h2><p><strong id="network-throughput">—</strong><span>packets / s</span></p></div><div><h2 title="Percentage of resolved packets that missed the two-second latency deadline. Lower is better. Newly pending packets do not count before their deadlines.">Latency SLO Violations</h2><p><strong id="slo-violations">—</strong><span id="percent-unit">%</span></p></div></div>
+ <header class="title"><div class="title-actions"><a class="paper-reference" href="../papers/behemoth.pdf" target="_blank" rel="noopener">Read the paper <span aria-hidden="true">↗</span></a><button id="theme-toggle" class="icon-button theme-toggle" type="button" aria-label="Switch to dark mode" aria-pressed="false" title="Switch to dark mode"><svg class="theme-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M20.5 14A9 9 0 0 1 10 3.5 9 9 0 1 0 20.5 14Z"/></svg><svg class="theme-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg></button><div class="guide-actions"><button id="tutorial-button" class="tutorial-launch" type="button" aria-controls="tutorial">Tutorial</button></div></div><h1>Idle Cycles Are<br><span>Not Wasted Cycles</span></h1></header>
+ <section id="campaign" class="campaign" aria-label="Four workload challenges">
+  <nav id="level-nav" class="level-nav" aria-label="Choose a level">
+   <button type="button" data-level="0"><span class="level-nav-name">Level 1</span><span class="level-medal" aria-hidden="true"></span></button>
+   <button type="button" data-level="1"><span class="level-nav-name">Level 2</span><span class="level-medal" aria-hidden="true"></span></button>
+   <button type="button" data-level="2"><span class="level-nav-name">Level 3</span><span class="level-medal" aria-hidden="true"></span></button>
+   <button type="button" data-level="3"><span class="level-nav-name">Level 4</span><span class="level-medal" aria-hidden="true"></span></button>
+   <button id="sandbox-button" type="button"><span class="level-nav-name">Sandbox</span></button>
+  </nav>
+  <div class="mission">
+   <div><h2 id="level-title">Level 1</h2><p id="level-goal">Maximize application throughput. Miss no more than 5% of packet deadlines.</p></div>
+   <div class="campaign-best"><span>Campaign personal best</span><p><strong id="campaign-total">0</strong><span> / 4,000</span></p><small id="level-best">Level best: 0 / 1,000</small></div>
+  </div>
+  <div id="campaign-guide-anchor"></div>
  </section>
+  <div id="benchmark-panel" class="benchmark-panel">
+   <div class="benchmark-readout"><span id="score-label">SCORE ESTIMATE</span><p><strong id="run-score" tabindex="-1">0</strong><span> / 1,000</span><span id="result-medal" class="medal-icon" role="img" hidden></span></p></div>
+   <div class="benchmark-actions"><button id="hint-button" class="tutorial-secondary" type="button">Hint</button><button id="retry-button" class="tutorial-secondary" type="button" hidden>Retry</button><button id="benchmark-start" class="help-done" type="button">Run</button><button id="benchmark-cancel" class="tutorial-secondary" type="button" hidden>Cancel run</button><button id="next-level" class="tutorial-secondary" type="button">Next level ▸</button></div><span id="countdown" class="countdown" aria-label="10 seconds remaining">10.0<span>s</span></span>
+  </div>
+ <section class="chip-panel" aria-label="Editable processor" id="processor">
+  <div class="chip-toolbar"><div class="paint-tools" id="paint-tools" role="group" aria-label="Core role"><span>Assign</span><button data-role="free" aria-pressed="false"><i class="swatch free"></i>Unassigned</button><button data-role="app" aria-pressed="false"><i class="swatch app"></i>App</button><button data-role="network" class="selected" aria-pressed="true"><i class="swatch network"></i>Network</button></div><button id="play" class="icon-button" hidden aria-label="Pause simulation" title="Pause simulation">Ⅱ</button></div>
  <section class="controls" aria-label="Sandbox settings">
-  <fieldset><legend>Waiting strategy</legend><div class="rectangles"><button data-policy="busy" aria-pressed="false">Busy</button><button data-policy="pause" class="selected" aria-pressed="true">Pause</button><button data-policy="lend" aria-pressed="false">Block &amp; lend</button><button data-policy="sleep" aria-pressed="false">Block &amp; sleep</button></div></fieldset>
-  <fieldset class="burst-control"><legend>Burst scale</legend><label class="sr-only" for="burst">Burst scale, short to long</label><input id="burst" type="range" min="0" max="2" step="1" value="1"><div class="range-labels"><span>Short</span><span>Medium</span><span>Long</span></div></fieldset>
+  <fieldset><legend>Waiting strategy</legend><div class="rectangles">
+   <div class="strategy-choice"><button data-policy="busy" class="selected" aria-pressed="true">Busy</button><button class="strategy-help" type="button" aria-label="About Busy" aria-expanded="false" aria-controls="strategy-help-busy">?</button><p id="strategy-help-busy" hidden>Checks for packets continuously. Uses power while idle.</p></div>
+   <div class="strategy-choice"><button data-policy="pause" aria-pressed="false">Pause</button><button class="strategy-help" type="button" aria-label="About Pause" aria-expanded="false" aria-controls="strategy-help-pause">?</button><p id="strategy-help-pause" hidden>Uses less power while waiting. Resumes quickly when packets arrive.</p></div>
+   <div class="strategy-choice"><button data-policy="lend" aria-pressed="false">Block &amp; lend</button><button class="strategy-help" type="button" aria-label="About Block and lend" aria-expanded="false" aria-controls="strategy-help-lend">?</button><p id="strategy-help-lend" hidden>Runs application work while idle. Returning to packets takes time and slows processing briefly.</p></div>
+   <div class="strategy-choice"><button data-policy="sleep" aria-pressed="false">Block &amp; sleep</button><button class="strategy-help" type="button" aria-label="About Block and sleep" aria-expanded="false" aria-controls="strategy-help-sleep">?</button><p id="strategy-help-sleep" hidden>Uses the least idle power. Takes long to resume packet processing.</p></div>
+  </div></fieldset>
+  <fieldset class="burst-control" hidden><legend>Burst duration</legend><label class="sr-only" for="burst">Network burst duration, short to long</label><input id="burst" type="range" min="0" max="2" step="1" value="1"><div class="range-labels"><span>Short</span><span>Medium</span><span>Long</span></div></fieldset>
+  <fieldset class="traffic-control" hidden><legend>Time receiving packets <output id="traffic-value">10%</output></legend><label class="sr-only" for="traffic">Percentage of time receiving packets</label><input id="traffic" type="range" min="1" max="9" step="1" value="1"><div class="traffic-labels"><span>10% receiving</span><span>90%</span></div></fieldset>
+ </section>
+  <div class="power-strip budget-strip"><span>Power budget</span><div id="power-budget" class="power-track budget-track" role="img" aria-label="Power budget" title="Illustrative allocation based on the displayed core states."><i id="budget-app"></i><i id="budget-network"></i><i id="budget-other"></i></div><div class="budget-legend" aria-hidden="true"><span>App</span><span>Net</span></div><strong id="power-value" class="sr-only">0%</strong></div><div class="power-strip temperature-strip"><span title="At a temperature of 100, the processor reduces clock speed. Keeping 13 or more cores active can reach this limit.">Package temperature</span><div class="power-track"><i id="temperature"></i></div><strong id="temperature-value">20 / 100</strong></div><div class="chip-stage"><span id="illustration-note" class="illustration-note" hidden title="Animation timing is stretched for readability. Scores and metrics use the actual workload.">Illustrative animation</span><canvas id="chip" width="800" height="398" aria-hidden="true"></canvas><div id="core-buttons" class="core-buttons" role="group" aria-label="Tap a core to paint its role and waiting strategy"></div></div>
+  <div class="metrics" aria-label="Live simulation metrics"><div><h2 title="Rate of completed application work, including work on lent network cores.">Application throughput</h2><p><strong id="app-throughput">—</strong><span>work / s</span></p></div><div><h2 id="network-metric-label" title="Rate of packets delivered before their deadline.">On-time packet rate</h2><p><strong id="network-throughput">—</strong><span>packets / s</span></p></div><div><h2 title="Percentage of resolved packets that missed their deadline. Lower is better. Pending packets are assessed when delivered or when their deadline expires.">Missed packet deadlines</h2><p><strong id="slo-violations">—</strong><span id="percent-unit">%</span></p></div></div>
  </section>
  <p id="announcement" class="sr-only" role="status" aria-live="polite"></p>
 </main>
-<dialog id="help" aria-labelledby="help-title">
- <div class="help-heading"><h2 id="help-title">How to play</h2><button id="help-close" class="icon-button" aria-label="Close help">×</button></div>
- <section class="help-section" aria-labelledby="help-motiv">
- <h3 id="help-motiv">The Little Core That Waited</h3>
- <p>Once upon a time, multicore processor cores were treated as independent units of compute. Under this model, idle network polling threads waste compute because they could instead be used to execute application instructions. This sandbox shows that when the processor is constrained by power and thermal headroom, this intuition does not hold. Instead, the processor behaves under a fixed compute budget, where idling may not be as wasteful as you think.</p>
- </section>
- <section class="help-section" aria-labelledby="help-goal">
- <h3 id="help-goal">Explore the tradeoffs</h3>
- <p>Explore the choices from the paper and see how power, heat, throughput and latency interact. Change one choice at a time and compare the results.</p>
- <p>Start with FREE cores. Paint app cores to do work and network cores to handle packets. Pick a waiting strategy, then tap cores. Use Unassigned to clear a core.</p>
- </section>
- <section class="help-section" aria-labelledby="help-strategies">
- <h3 id="help-strategies">Waiting Strategies</h3>
- <dl class="strategy-guide">
-  <div><dt>Busy</dt><dd>Instant response, but uses power even while waiting. Less headroom for app throughput and more heat; usually good network throughput and few SLO violations.</dd></div>
-  <div><dt>Pause</dt><dd>Very little idle power and a quick wake. More headroom for apps and less heat, usually with good network throughput and few violations.</dd></div>
-  <div><dt>Block &amp; lend</dt><dd>Becomes an app worker: more app throughput, but uses power and heats up again. Its long network wake can lower network throughput and raise violations.</dd></div>
-  <div><dt>Block &amp; sleep</dt><dd>Minimal idle power; cools while idle. Frees headroom for existing apps without adding app workers. Its long wake can lower network throughput and raise violations.</dd></div>
- </dl>
- </section>
- <section class="help-section" aria-labelledby="help-metrics">
- <h3 id="help-metrics">Metrics</h3>
- <dl class="strategy-guide">
-  <div><dt>App throughput</dt><dd>App work completed per second, including lent cores. Higher is better.</dd></div>
-  <div><dt>Network throughput</dt><dd>Packets delivered per second, including late packets. Higher is better.</dd></div>
-  <div><dt>Latency SLO Violations</dt><dd>Percentage of resolved packets that missed the deadline. Lower is better.</dd></div>
- </dl>
- </section>
- <div class="help-footer"><button id="help-done" class="help-done">Got it</button><button id="tutorial-replay" class="tutorial-secondary">Replay Behemoth’s tutorial</button></div>
-</dialog>
-<dialog id="tutorial" aria-labelledby="tutorial-title" aria-describedby="tutorial-text">
- <div class="tutorial-heading"><span>BEHEMOTH'S CPU TOUR</span><button id="tutorial-skip" class="tutorial-secondary" type="button">Skip tutorial</button></div>
- <figure class="tutorial-example" aria-hidden="true">
-  <div class="tutorial-example-heading"><span>EXAMPLE PACKAGE</span><span id="tutorial-state">SHARED POWER</span></div>
-  <canvas id="tutorial-chip" width="360" height="144"></canvas>
-  <div class="tutorial-example-meter"><span id="tutorial-visual-note">APP + NETWORK</span><span class="tutorial-heat-track" hidden><i id="tutorial-heat"></i></span></div>
-  <figcaption id="tutorial-caption"></figcaption>
- </figure>
- <div class="tutorial-dialogue" aria-live="polite" aria-atomic="true">
-  <div class="behemoth-guide" aria-hidden="true"><canvas id="behemoth" width="256" height="296"></canvas></div>
-  <h2 id="tutorial-title"></h2><p id="tutorial-text"></p>
+<aside id="tutorial" class="tutorial-guide" aria-label="Behemoth's processor guide" hidden>
+ <div class="behemoth-guide" aria-hidden="true"><canvas id="behemoth" width="256" height="296"></canvas></div>
+ <div class="tutorial-bubble">
+  <div class="tutorial-dialogue" aria-live="polite" aria-atomic="true"><h2 id="tutorial-title"></h2><p id="tutorial-text"></p></div>
+  <div class="tutorial-footer">
+   <button id="tutorial-skip" class="tutorial-secondary" type="button">Skip</button>
+   <span id="tutorial-progress" aria-label="Tutorial progress"></span>
+   <div><button id="tutorial-back" class="tutorial-secondary" type="button">Back</button><button id="tutorial-next" class="help-done" type="button">Next ▸</button></div>
+  </div>
+  <div class="tutorial-progress-track" aria-hidden="true"><i id="tutorial-progress-bar"></i></div>
  </div>
- <div class="tutorial-footer"><span id="tutorial-progress" aria-label="Tutorial progress"></span><div><button id="tutorial-back" class="tutorial-secondary" type="button">Back</button><button id="tutorial-next" class="help-done" type="button" autofocus>Next <span aria-hidden="true">▸</span></button></div></div>
-</dialog>
+</aside>
 </body>
 </html>
